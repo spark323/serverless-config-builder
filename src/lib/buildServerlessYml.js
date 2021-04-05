@@ -6,5 +6,6 @@ const { hideBin } = require('yargs/helpers')
 const argv = yargs(hideBin(process.argv)).argv
 
 let templateFile = (argv.t) ? argv.t : "serverless_template.yml";
+let stage = (argv.stage) ? argv.stage : "dev";
 console.log("templateFile:", templateFile);
-devOpsUtil.generateServerlessFunction(`./${templateFile}`);
+devOpsUtil.generateServerlessFunction(`./${templateFile}`, stage);

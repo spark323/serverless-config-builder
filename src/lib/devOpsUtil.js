@@ -32,12 +32,12 @@ async function getFileListFromLocal(dir, arr) {
     return arr;
 }
 
-async function generateServerlessFunction(templateFile) {
+async function generateServerlessFunction(templateFile, stage) {
     let fileList = await getFileListFromLocal("./src/lambda", []);
 
     const apiSpecList = await getApiSepcList(fileList);
 
-    await printServerlessFunction(templateFile, apiSpecList);
+    await printServerlessFunction(stage, templateFile, apiSpecList);
 }
 
 
@@ -260,7 +260,7 @@ function sortApiSpecListByPath(apiSpecList) {
     }
     return obj;
 }
-async function printServerlessFunction(templateFile, apiSpecList) {
+async function printServerlessFunction(stage, templateFile, apiSpecList) {
     let fncs = "";
     let cnt = 0;
     let filenum = 1;
@@ -281,7 +281,7 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                         name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
                         handler: `src/lambda/${item.name}.handler`,
                         //alarms: ["scan500Error"],
-                        alarms: [{ name: "functionErrors", enabled: (process.env.stage == "prod") ? true : false }],
+                        alarms: [{ name: "functionErrors", enabled: (stage == "prod") ? true : false }],
 
                         events: [
                             {
