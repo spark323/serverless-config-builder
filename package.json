@@ -8,9 +8,17 @@
     "yargs": "^16.2.0"
   },
   "version": "1.0.0",
-  "description": "",
+  "description": "Helper to build serverelss.yml",
   "main": "src/lib/buildServerlessYml.js",
   "bin": {
     "slsbdr": "src/lib/buildServerlessYml.js"
+  },
+  "license": "MIT",
+  "keywords": [
+    "serverless"
+  ],
+  "author": {
+    "name": "Spark",
+    "email": "innocentchris@gmail.com"
   }
 }
