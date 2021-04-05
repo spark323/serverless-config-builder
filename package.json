@@ -1,0 +1,16 @@
+{
+  "name": "slsbuilder",
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "js-yaml": "^4.0.0",
+    "json5": "^2.2.0",
+    "path": "^0.12.7",
+    "yargs": "^16.2.0"
+  },
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/lib/buildServerlessYml.js",
+  "bin": {
+    "slsbdr": "src/lib/buildServerlessYml.js"
+  }
+}
