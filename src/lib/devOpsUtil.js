@@ -296,6 +296,12 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
                     if (item.layer) {
                         funcObject["layers"] = [item.layer]
                     }
+
+                    if (item.sqs) {
+                        funcObject["events"].push({
+                            sqs: { arn: { "Fn::GetAtt": [item.sqs, "Arn"] } }
+                        })
+                    }
                     if (item.timeout) {
                         funcObject["timeout"] = parseInt(item.timeout);
                     }
