@@ -275,23 +275,44 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
 
                 const item = obj.item;
                 if (item && (item.method) && (!item.disabled)) {
-
                     const nameArr = item.name.split("/");
-                    let funcObject = {
-                        name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
-                        handler: `src/lambda/${item.name}.handler`,
-                        //alarms: ["scan500Error"],
-                        alarms: [{ name: "functionErrors", enabled: (stage == "prod") ? true : false }],
+                    let funcObject = {};
+                    if (item.type == "websocket") {
 
-                        events: [
-                            {
-                                http: {
-                                    path: `${item.uri}`,
-                                    method: `${item.method.toLowerCase()}`,
-                                    cors: true,
+                        funcObject = {
+                            name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
+                            handler: `src/lambda/${item.name}.handler`,
+                            //alarms: ["scan500Error"],
+                            alarms: [{ name: "functionErrors", enabled: (stage == "prod") ? true : false }],
+
+                            events: [
+                                {
+                                    websocket: {
+                                        route: `${item.route}`,
+
+                                    }
                                 }
-                            }
-                        ]
+                            ]
+                        }
+                    }
+                    else {
+
+                        funcObject = {
+                            name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
+                            handler: `src/lambda/${item.name}.handler`,
+                            //alarms: ["scan500Error"],
+                            alarms: [{ name: "functionErrors", enabled: (stage == "prod") ? true : false }],
+
+                            events: [
+                                {
+                                    http: {
+                                        path: `${item.uri}`,
+                                        method: `${item.method.toLowerCase()}`,
+                                        cors: true,
+                                    }
+                                }
+                            ]
+                        }
                     }
                     if (item.layer) {
                         funcObject["layers"] = [item.layer]
