@@ -12,6 +12,7 @@ console.log("templateFile:", templateFile);
 
 let graphql = (argv.g);
 
+console.log(graphql);
 if (graphql) {
     devOpsUtil.generateGraphQL();
 } else {
