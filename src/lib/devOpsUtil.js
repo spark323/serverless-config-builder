@@ -4,34 +4,49 @@ const fs = require('fs');
 const fspr = require('fs').promises;
 var path = require('path')
 const JSON5 = require('json5')
-
-
-
-
 async function getFileListFromLocal(dir, arr) {
     const result = await fspr.readdir(dir);
-
     let prom = result.map(async (file) => {
         file = path.resolve(dir, file);
         const element = await fspr.stat(file);
-
         if (element.isDirectory()) {
             const newar = await getFileListFromLocal(file, arr);
-
             arr.concat(newar);
         }
         else {
             arr.push({ path: file, type: "local" })
         }
-
     })
     await Promise.all(prom);
-
-
-
     return arr;
 }
 
+async function generateGraphQL() {
+    let fileList = await getFileListFromLocal("./src/lambda", []);
+
+    const apiSpecList = await getApiSepcList(fileList);
+    let graphQLs = { query: [], mutation: [] };
+    for (var property in apiSpecList) {
+
+        let apiSpec = apiSpecList[property];
+        console.log(apiSpec);
+        apiSpec.forEach(async (obj) => {
+            const item = obj.item;
+            if (item) {
+                if (item.graphql == true) {
+                    if (item.method.toLowerCase() == "get") {
+                        graphQLs.query.push({ name: item.name, method: item.method });
+                    }
+                    else {
+                        graphQLs.mutation.push({ name: item.name, method: item.method });
+                    }
+                }
+            }
+        });
+    }
+    let yamlStr = yaml.dump(graphQLs);
+    fs.writeFileSync(`graphqls.yml`, yamlStr, 'utf8');
+}
 async function generateServerlessFunction(templateFile, stage) {
     let fileList = await getFileListFromLocal("./src/lambda", []);
 
@@ -40,12 +55,6 @@ async function generateServerlessFunction(templateFile, stage) {
     await printServerlessFunction(stage, templateFile, apiSpecList);
 }
 
-
-function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
 function replaceHttpMethod(_str) {
 
     let str = _str.replace("/post", "");
@@ -90,13 +99,8 @@ async function getApiSepcList(files) {
                     catch (e) {
                         console.error(e);
                     }
-
                     utf8 = file.toString('utf8');
-
-
                 }
-
-
                 //  const decoded = Base64.decode(fileContentEncoded)
                 let regexstr = `(?<=apiSpec = )((.|\n|\r)*?)(?=\;)`;
                 var regex = new RegExp(regexstr, "g");
@@ -143,11 +147,7 @@ async function getApiSepcList(files) {
 
 
 function createPostmanImport(apiSpecList, title, stage, _version, host) {
-
-
-
     const projectInfo = yaml.load(fs.readFileSync('./info.yml', "utf8"));
-
     const description = projectInfo.description;
     const contact = projectInfo.contact;
     const version = `${stage}-${_version}`;
@@ -348,5 +348,7 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
 }
 
 module.exports.generateServerlessFunction = generateServerlessFunction;
+module.exports.generateGraphQL = generateGraphQL;
+
 
 //handleCommit("tw_rnd_backend_smartstay_nodejs");
