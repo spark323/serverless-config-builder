@@ -111,10 +111,7 @@ async function getApiSepcList(files) {
             apiSpecList["error"].push({ path: path, obj: "error" })
             console.error(e);
         }
-
     });
-
-
     return apiSpecList;
 }
 
