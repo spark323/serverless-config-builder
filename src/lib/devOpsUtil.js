@@ -72,76 +72,49 @@ async function getApiSepcList(files) {
     console.log(files);
 
     let apiSpecList = { "nomatch": [], "error": [] };
-    function processFile(fileItem) {
-        return new Promise(async (resolve, reject) => {
-            const path = fileItem.path;
-            if (path.includes("codeCommitExample") || path.includes("onCodePushed")) {
-                console.log(cnt++, "codeCommitExample");
-                resolve("ok");
+    files.forEach((fileItem) => {
+        const path = fileItem.path;
+        if (path.includes("codeCommitExample") || path.includes("onCodePushed")) {
+            console.log(cnt++, "codeCommitExample");
+            return;
+        }
+        try {
+            let utf8 = undefined;
+            const mod = require(path);
+            let name = path.replace(".js", "");
+            name = replaceAll(name, "\\\\", "/");
+            let nameArr = name.split("/");
+            const idxLambda = nameArr.indexOf("lambda");
+            nameArr = nameArr.slice(idxLambda - 1);
+            name = nameArr.slice(2).join("/");
+            let obj = mod.apiSpec;
+            if (!mod.apiSpec) {
+                console.log(cnt++, path, "\u001b[1;31m no_match")
+                apiSpecList["nomatch"].push({ path: path, obj: "no_match" })
             }
-            try {
-                let utf8 = undefined;
-                let category = "";
-                let name = "";
-                let file = undefined;
-                if (fileItem.type == "local") {
-                    name = path.replace(".js", "");
-                    name = replaceAll(name, "\\\\", "/");
-                    let nameArr = name.split("/");
-
-                    const idxLambda = nameArr.indexOf("lambda");
-                    nameArr = nameArr.slice(idxLambda - 1);
-                    name = nameArr.slice(2).join("/");
-                    category = nameArr[2];
-                    try {
-                        file = await fspr.readFile(path);
+            else {
+                try {
+                    category = obj.category;
+                    obj["name"] = name;
+                    obj["uri"] = replaceHttpMethod(name);
+                    console.log(cnt++, path, obj);
+                    if (!apiSpecList[category]) {
+                        apiSpecList[category] = [];
                     }
-                    catch (e) {
-                        console.error(e);
-                    }
-                    utf8 = file.toString('utf8');
+                    apiSpecList[category].push({ path: path, item: obj })
+                } catch (e) {
+                    apiSpecList["error"].push({ path: path, obj: "error" })
                 }
-                //  const decoded = Base64.decode(fileContentEncoded)
-                let regexstr = `(?<=apiSpec = )((.|\n|\r)*?)(?=\;)`;
-                var regex = new RegExp(regexstr, "g");
-                var matches = utf8.matchAll(regex)
-                const matchArray = Array.from(matches);
-                for (const match of matchArray) {
-                    try {
-                        let obj = JSON5.parse(match[0]);
-                        category = obj.category;
-                        obj["name"] = name;
-                        obj["uri"] = replaceHttpMethod(name);
-                        console.log(cnt++, path, obj);
-                        if (!apiSpecList[category]) {
-                            apiSpecList[category] = [];
-                        }
-                        apiSpecList[category].push({ path: path, item: obj })
-                    } catch (e) {
-                        apiSpecList["error"].push({ path: path, obj: "error" })
-                        console.log(match[0]);
-                        console.error(path);
-                        console.error(e);
-                    }
-                }
-                if (matchArray.length < 1) {
-
-                    console.log(cnt++, path, "\u001b[1;31m no_match")
-                    apiSpecList["nomatch"].push({ path: path, obj: "no_match" })
-                }
-
             }
-            catch (e) {
-                console.error(e);
-            }
+        }
+        catch (e) {
+            apiSpecList["error"].push({ path: path, obj: "error" })
+            console.error(e);
+        }
 
-            resolve("ok");
-        });
-    }
-    await files.reduce(async (previousPromise, nextID) => {
-        await previousPromise;
-        return processFile(nextID);
-    }, Promise.resolve());
+    });
+
+
     return apiSpecList;
 }
 
