@@ -97,7 +97,7 @@ async function getApiSepcList() {
             const matchArray = Array.from(matches);
             for (const match of matchArray) {
                 try {
-                    let obj = require(path).apiSepc;
+                    let obj = require(path).apiSpec;
                     category = obj.category;
                     obj["name"] = name;
                     obj["uri"] = replaceHttpMethod(name);
