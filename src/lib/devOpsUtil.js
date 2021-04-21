@@ -21,8 +21,8 @@ async function getFileListFromLocal(dir, arr) {
     return arr;
 }
 async function generateGraphQL() {
-    let fileList = await getFileListFromLocal("./src/lambda", []);
-    const apiSpecList = await getApiSepcList(fileList);
+
+    const apiSpecList = await getApiSepcList();
     let graphQLs = { query: [], mutation: [] };
     for (var property in apiSpecList) {
         let apiSpec = apiSpecList[property];
@@ -45,8 +45,8 @@ async function generateGraphQL() {
     fs.writeFileSync(`graphqls.yml`, yamlStr, 'utf8');
 }
 async function generateServerlessFunction(templateFile, stage) {
-    let fileList = await getFileListFromLocal("./src/lambda", []);
-    const apiSpecList = await getApiSepcList(fileList);
+
+    const apiSpecList = await getApiSepcList();
     await printServerlessFunction(stage, templateFile, apiSpecList);
 }
 
@@ -61,27 +61,43 @@ function replaceHttpMethod(_str) {
 function replaceAll(str, find, replace) {
     return str.replace(new RegExp(find, 'g'), replace);
 }
-async function getApiSepcList(files) {
+async function getApiSepcList() {
     let cnt = 0;
+    let files = await getFileListFromLocal("./src/lambda", []);
     //console.log(files);
     let apiSpecList = { "nomatch": [], "error": [] };
     files.forEach((fileItem) => {
         const path = fileItem.path;
         try {
-            const mod = require(path);
-            let name = path.replace(".js", "");
-            name = replaceAll(name, "\\\\", "/");
-            let nameArr = name.split("/");
-            const idxLambda = nameArr.indexOf("lambda");
-            nameArr = nameArr.slice(idxLambda - 1);
-            name = nameArr.slice(2).join("/");
-            let obj = mod.apiSpec;
-            if (!mod.apiSpec) {
-                //console.log(cnt++, path, "\u001b[1;31m no_match")
-                apiSpecList["nomatch"].push({ path: path, obj: "no_match" })
-            }
-            else {
+            let utf8 = undefined;
+            let category = "";
+            let name = "";
+            let file = undefined;
+            if (fileItem.type == "local") {
+                name = path.replace(".js", "");
+                name = replaceAll(name, "\\\\", "/");
+                let nameArr = name.split("/");
+
+                const idxLambda = nameArr.indexOf("lambda");
+                nameArr = nameArr.slice(idxLambda - 1);
+                name = nameArr.slice(2).join("/");
+                category = nameArr[2];
                 try {
+                    file = fs.readFileSync(path);
+                }
+                catch (e) {
+                    console.error(e);
+                }
+                utf8 = file.toString('utf8');
+            }
+            //  const decoded = Base64.decode(fileContentEncoded)
+            let regexstr = `(?<=apiSpec = )((.|\n|\r)*?)(?=\;)`;
+            var regex = new RegExp(regexstr, "g");
+            var matches = utf8.matchAll(regex)
+            const matchArray = Array.from(matches);
+            for (const match of matchArray) {
+                try {
+                    let obj = require(path).apiSepc;
                     category = obj.category;
                     obj["name"] = name;
                     obj["uri"] = replaceHttpMethod(name);
@@ -92,7 +108,15 @@ async function getApiSepcList(files) {
                     apiSpecList[category].push({ path: path, item: obj })
                 } catch (e) {
                     apiSpecList["error"].push({ path: path, obj: "error" })
+                    //console.log(match[0]);
+                    // console.error(path);
+                    //console.error(e);
                 }
+            }
+            if (matchArray.length < 1) {
+
+                //console.log(cnt++, path, "\u001b[1;31m no_match")
+                apiSpecList["nomatch"].push({ path: path, obj: "no_match" })
             }
         }
         catch (e) {
@@ -280,3 +304,5 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
 
 module.exports.generateServerlessFunction = generateServerlessFunction;
 module.exports.generateGraphQL = generateGraphQL;
+
+module.exports.getApiSepcList = getApiSepcList;
