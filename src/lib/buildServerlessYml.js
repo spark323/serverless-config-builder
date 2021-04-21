@@ -7,12 +7,12 @@ const argv = yargs(hideBin(process.argv)).argv
 
 let templateFile = (argv.t) ? argv.t : "serverless_template.yml";
 let stage = (argv.stage) ? argv.stage : "dev";
-console.log("templateFile:", templateFile);
+//console.log("templateFile:", templateFile);
 
 
 let graphql = (argv.g);
 
-console.log(graphql);
+//console.log(graphql);
 if (graphql) {
     devOpsUtil.generateGraphQL();
 } else {

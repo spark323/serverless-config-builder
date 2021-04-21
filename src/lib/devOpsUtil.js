@@ -20,16 +20,13 @@ async function getFileListFromLocal(dir, arr) {
     await Promise.all(prom);
     return arr;
 }
-
 async function generateGraphQL() {
     let fileList = await getFileListFromLocal("./src/lambda", []);
-
     const apiSpecList = await getApiSepcList(fileList);
     let graphQLs = { query: [], mutation: [] };
     for (var property in apiSpecList) {
-
         let apiSpec = apiSpecList[property];
-        console.log(apiSpec);
+        //console.log(apiSpec);
         apiSpec.forEach(async (obj) => {
             const item = obj.item;
             if (item) {
@@ -49,14 +46,11 @@ async function generateGraphQL() {
 }
 async function generateServerlessFunction(templateFile, stage) {
     let fileList = await getFileListFromLocal("./src/lambda", []);
-
     const apiSpecList = await getApiSepcList(fileList);
-
     await printServerlessFunction(stage, templateFile, apiSpecList);
 }
 
 function replaceHttpMethod(_str) {
-
     let str = _str.replace("/post", "");
     str = str.replace("/get", "");
     str = str.replace("/put", "");
@@ -69,17 +63,11 @@ function replaceAll(str, find, replace) {
 }
 async function getApiSepcList(files) {
     let cnt = 0;
-    console.log(files);
-
+    //console.log(files);
     let apiSpecList = { "nomatch": [], "error": [] };
     files.forEach((fileItem) => {
         const path = fileItem.path;
-        if (path.includes("codeCommitExample") || path.includes("onCodePushed")) {
-            console.log(cnt++, "codeCommitExample");
-            return;
-        }
         try {
-            let utf8 = undefined;
             const mod = require(path);
             let name = path.replace(".js", "");
             name = replaceAll(name, "\\\\", "/");
@@ -89,7 +77,7 @@ async function getApiSepcList(files) {
             name = nameArr.slice(2).join("/");
             let obj = mod.apiSpec;
             if (!mod.apiSpec) {
-                console.log(cnt++, path, "\u001b[1;31m no_match")
+                //console.log(cnt++, path, "\u001b[1;31m no_match")
                 apiSpecList["nomatch"].push({ path: path, obj: "no_match" })
             }
             else {
@@ -97,7 +85,7 @@ async function getApiSepcList(files) {
                     category = obj.category;
                     obj["name"] = name;
                     obj["uri"] = replaceHttpMethod(name);
-                    console.log(cnt++, path, obj);
+                    //console.log(cnt++, path, obj);
                     if (!apiSpecList[category]) {
                         apiSpecList[category] = [];
                     }
@@ -109,7 +97,7 @@ async function getApiSepcList(files) {
         }
         catch (e) {
             apiSpecList["error"].push({ path: path, obj: "error" })
-            console.error(e);
+
         }
     });
     return apiSpecList;
@@ -125,7 +113,7 @@ function createPostmanImport(apiSpecList, title, stage, _version, host) {
     const schemes = ["https"];
     let paths = {};
     const obj = sortApiSpecListByPath(apiSpecList);
-    console.log(obj);
+    //console.log(obj);
     for (var property in obj) {
         paths[property] = {};
         for (var method in obj[property]) {
@@ -218,61 +206,46 @@ function sortApiSpecListByPath(apiSpecList) {
             if (!item || !item.type || item.hide || !item.method) {
                 return;
             }
-
             if (!obj[item.uri]) {
                 obj[item.uri] = [];
             }
             obj[item.uri][item.method.toLowerCase()] = item;
-
-
         })
-
     }
     return obj;
 }
 async function printServerlessFunction(stage, templateFile, apiSpecList) {
-    let fncs = "";
-    let cnt = 0;
-    let filenum = 1;
     let serverlessTemplet1 = yaml.load(fs.readFileSync(templateFile, "utf8"))
     let functions = {};
-
     for (var property in apiSpecList) {
-
         let apiSpec = apiSpecList[property];
         if (apiSpec.length > 0) {
             apiSpec.forEach(async (obj) => {
-
                 const item = obj.item;
                 if (item && (item.method) && (!item.disabled)) {
                     const nameArr = item.name.split("/");
                     let funcObject = {};
                     if (item.type == "websocket") {
-
                         funcObject = {
                             name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
                             handler: `src/lambda/${item.name}.handler`,
                             //alarms: ["scan500Error"],
                             alarms: [{ name: "functionErrors", enabled: (stage == "prod") ? true : false }],
-
                             events: [
                                 {
                                     websocket: {
                                         route: `${item.route}`,
-
                                     }
                                 }
                             ]
                         }
                     }
                     else {
-
                         funcObject = {
                             name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
                             handler: `src/lambda/${item.name}.handler`,
                             //alarms: ["scan500Error"],
                             alarms: [{ name: "functionErrors", enabled: (stage == "prod") ? true : false }],
-
                             events: [
                                 {
                                     http: {
@@ -287,7 +260,6 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
                     if (item.layer) {
                         funcObject["layers"] = [item.layer]
                     }
-
                     if (item.sqs) {
                         funcObject["events"].push({
                             sqs: { arn: { "Fn::GetAtt": [item.sqs, "Arn"] } }
@@ -297,20 +269,9 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
                         funcObject["timeout"] = parseInt(item.timeout);
                     }
                     functions[`${nameArr.join("_")}`] = funcObject;
-
-
-
                 }
-
             });
-
-
         }
-
-        // serverlessTemplet1.service = `${serverlessTemplet1.service}${filenum}`;
-        // serverlessTemplet1.provider.stackName = `${serverlessTemplet1.provider.stackName}${filenum}`;
-
-
     }
     serverlessTemplet1.functions = functions;
     let yamlStr = yaml.dump(serverlessTemplet1);
@@ -319,6 +280,3 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
 
 module.exports.generateServerlessFunction = generateServerlessFunction;
 module.exports.generateGraphQL = generateGraphQL;
-
-
-//handleCommit("tw_rnd_backend_smartstay_nodejs");
