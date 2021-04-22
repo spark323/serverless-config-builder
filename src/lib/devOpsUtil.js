@@ -3,6 +3,7 @@ const axios = require('axios').default;
 AWS.config.update({
     region: "ap-northeast-2"
 });
+var moment = require('moment-timezone');
 const yaml = require('js-yaml');
 const fs = require('fs');
 const fspr = require('fs').promises;
@@ -23,6 +24,15 @@ async function getFileListFromLocal(dir, arr) {
     })
     await Promise.all(prom);
     return arr;
+}
+function getOutputs(data) {
+    let obj = {};
+    const stack = data.Stacks[0].Outputs;
+    stack.forEach(element => {
+        const key = element.OutputKey;
+        obj[key] = element.OutputValue;
+    });
+    return obj;
 }
 async function generateGraphQL() {
 
@@ -99,7 +109,7 @@ async function getApiSepcList() {
             var regex = new RegExp(regexstr, "g");
             var matches = utf8.matchAll(regex)
             const matchArray = Array.from(matches);
-            for (const match of matchArray) {
+            if (matchArray.length > 0) {
                 try {
                     let obj = require(path).apiSpec;
                     category = obj.category;
@@ -117,7 +127,7 @@ async function getApiSepcList() {
                     //console.error(e);
                 }
             }
-            if (matchArray.length < 1) {
+            else {
 
                 //console.log(cnt++, path, "\u001b[1;31m no_match")
                 apiSpecList["nomatch"].push({ path: path, obj: "no_match" })
@@ -334,7 +344,7 @@ async function handleCommit(stackname, stage, version, title, repoName, branch, 
 
 
 
-    await updateDocument(info.ServiceEndpoint, stage, version, title, apiSpecList, confluenceSpaceName, confluencePageId, ancestorsPageId)
+    await updateDocument(info.ServiceEndpoint, stage, version, title, apiSpecList, confluenceSpaceName, confluencePageId, ancestorsPageId, confluenceUserId, confluencePassword)
 }
 async function updateDocument(host, stage, version, title, apiSpecList, confluenceSpaceName, confluencePageId, ancestorsPageId, confluenceUserId, confluencePassword) {
     let cnt = 0;
@@ -576,7 +586,7 @@ async function updateDocument(host, stage, version, title, apiSpecList, confluen
     if (confluenceSpaceName) {
 
         //getpageVersion
-        const auth = Base64.encode("spark@twinny.co.kr" + ":" + "VQUqEYXASjJOOP9xuIzl7EF5");
+
         const confData = await axios({
             method: 'GET',
             url: "https://twinny.atlassian.net/wiki/rest/api/content/" + confluencePageId,
