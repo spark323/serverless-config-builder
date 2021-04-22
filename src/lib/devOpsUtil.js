@@ -3,6 +3,7 @@ const axios = require('axios').default;
 AWS.config.update({
     region: "ap-northeast-2"
 });
+var Base64 = require('js-base64').Base64;
 var moment = require('moment-timezone');
 const yaml = require('js-yaml');
 const fs = require('fs');
