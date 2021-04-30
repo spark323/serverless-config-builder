@@ -316,7 +316,17 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
     let yamlStr = yaml.dump(serverlessTemplet1);
     fs.writeFileSync(`serverless.yml`, yamlStr, 'utf8');
 }
+async function updateDoc(stack, stage, version, title, confluenceSpaceName, confluencePageId, ancestorsPageId, confluenceUserId, confluencePassword) {
 
+    const info = getOutputs(stack);
+
+    let files = await getFileListFromLocal("./src/lambda", []);
+    const apiSpecList = await getApiSepcList(files);
+
+
+
+    await updateDocument(info.ServiceEndpoint, stage, version, title, apiSpecList, confluenceSpaceName, confluencePageId, ancestorsPageId, confluenceUserId, confluencePassword)
+}
 async function handleCommit(stackname, stage, version, title, repoName, branch, confluenceSpaceName, confluencePageId, ancestorsPageId, confluenceUserId, confluencePassword) {
 
     console.log("stackname", stackname);
@@ -626,7 +636,7 @@ async function updateDocument(host, stage, version, title, apiSpecList, confluen
 }
 
 
-
+module.exports.updateDoc = updateDoc;
 module.exports.handleCommit = handleCommit;
 module.exports.generateServerlessFunction = generateServerlessFunction;
 module.exports.generateGraphQL = generateGraphQL;
