@@ -288,7 +288,7 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
                             events: [
                                 {
                                     s3: {
-                                        bucket: `\${opt:stage, "prod"}.${item.event.bucket}`, event: item.event.event,
+                                        bucket: `\${opt:stage, "dev"}.${item.event.bucket}`, event: item.event.event,
                                         existing: true
                                     }
                                 }
