@@ -279,6 +279,23 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
                             ]
                         }
                     }
+                    else if (item.type == "s3") {
+                        funcObject = {
+                            name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
+                            handler: `src/lambda/${item.name}.handler`,
+                            // alarms: ["scan500Error"],
+                            alarms: ["functionErrors"],
+                            events: [
+                                {
+                                    s3: {
+                                        bucket: `\${opt:stage, "prod"}.${item.event.bucket}`, event: item.event.event,
+                                        existing: true
+                                    }
+                                }
+                            ]
+                        }
+
+                    }
                     else {
                         funcObject = {
                             name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
