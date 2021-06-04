@@ -289,7 +289,7 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
                                 {
                                     s3: {
                                         bucket: `${item.event.bucket}`, event: item.event.event,
-                                        existing: true
+                                        existing: (item.event.existing) ? item.event.existing : false
                                     }
                                 }
                             ]
