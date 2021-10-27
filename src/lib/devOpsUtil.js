@@ -125,7 +125,7 @@ async function getApiSepcList() {
                     apiSpecList["error"].push({ path: path, obj: "error" })
                     //console.log(match[0]);
                     // console.error(path);
-                    //console.error(e);
+                    console.error(e);
                 }
             }
             else {
@@ -135,6 +135,7 @@ async function getApiSepcList() {
             }
         }
         catch (e) {
+            console.error(e);
             apiSpecList["error"].push({ path: path, obj: "error" })
 
         }
