@@ -297,6 +297,29 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
                         }
 
                     }
+                    else if (item.type == "sqs") {
+
+                        funcObject = {
+                            name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
+                            handler: `src/lambda/${item.name}.handler`,
+                            // alarms: ["scan500Error"],
+                            alarms: ["functionErrors"],
+                            events: [
+
+                            ]
+                        }
+
+                        if (item.sqsARN) {
+                            funcObject["events"].push({
+                                sqs: { arn: item.sqsARN }
+                            })
+                        }
+                        else {
+                            funcObject["events"].push({
+                                sqs: { arn: { "Fn::GetAtt": [item.sqs, "Arn"] } }
+                            })
+                        }
+                    }
                     else {
                         funcObject = {
                             name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
@@ -314,14 +337,11 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
                             ]
                         }
                     }
+
                     if (item.layer) {
                         funcObject["layers"] = [item.layer]
                     }
-                    if (item.sqs) {
-                        funcObject["events"].push({
-                            sqs: { arn: { "Fn::GetAtt": [item.sqs, "Arn"] } }
-                        })
-                    }
+
                     if (item.timeout) {
                         funcObject["timeout"] = parseInt(item.timeout);
                     }
