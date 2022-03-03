@@ -320,6 +320,16 @@ async function printServerlessFunction(stage, templateFile, apiSpecList) {
                             })
                         }
                     }
+                    else if (item.type == "pure") {
+                        funcObject = {
+                            name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
+                            handler: `src/lambda/${item.name}.handler`,
+                            //alarms: ["scan500Error"],
+
+
+                        }
+                    }
+
                     else {
                         funcObject = {
                             name: `\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`,
