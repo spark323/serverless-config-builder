@@ -272,14 +272,14 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                     }
                     //어느 이벤트에도 트리거되지 않는 함수
                     else if (item.type == "pure") {
-
+                        catchAllMethod
                     }
                     //별도의 명시가 없다면 모두 HTTP
                     else {
                         funcObject.events.push(
                             {
-                                http: {
-                                    path: `${item.uri}`,
+                                httpApi: {
+                                    path: `/${item.method == "*" ? "any" : item.method.toLowerCase()}/${item.uri}`,
                                     method: `${item.method.toLowerCase()}`,
                                     cors: true,
                                 }
