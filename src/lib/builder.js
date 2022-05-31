@@ -44,6 +44,11 @@ async function generateServerlessFunction(templateFile) {
     await printServerlessFunction(templateFile, apiSpecList);
 }
 
+async function generateExportFile() {
+    const apiSpecList = await getApiSepcList();
+    let yamlStr = yaml.dump(createPostmanImport(apiSpecList));
+    fs.writeFileSync(`export.yml`, yamlStr, 'utf8');
+}
 
 /*
 
@@ -101,8 +106,12 @@ async function getApiSepcList() {
 }
 
 //[todo4: 포스트맨에 Export 기능 추가하기]
-function createPostmanImport(apiSpecList, title, stage, _version, host) {
+function createPostmanImport(apiSpecList) {
     const projectInfo = yaml.load(fs.readFileSync('./info.yml', "utf8"));
+    const stage = projectInfo.stage;
+    const title = projectInfo.title;
+    const _version = projectInfo.version;
+    const host = projectInfo.host;
     const description = projectInfo.description;
     const contact = projectInfo.contact;
     const version = `${stage}-${_version}`;
@@ -113,23 +122,72 @@ function createPostmanImport(apiSpecList, title, stage, _version, host) {
     const obj = sortApiSpecListByPath(apiSpecList);
     //console.log(obj);
     for (var property in obj) {
-        paths[property] = {};
+        const _property = "/" + property;
+        paths[_property] = {};
         for (var method in obj[property]) {
+
             const api = obj[property][method];
-            paths[property][method] = {};
-            paths[property][method].descroption = api.desc;
+            paths[_property][method] = {};
+            paths[_property][method].description = api.desc;
             if (!api.noAuth) {
-                paths[property][method].security =
+                paths[_property][method].security =
                     [{
                         bearerAuth: ["test"]
                     }]
             }
-            paths[property][method].parameters = [];
+
+            if (api.responses.content) {
+                paths[_property][method].responses = {
+                    "200": {
+                        description: api.responses.description,
+                    }
+                }
+                paths[_property][method].responses["200"]["content"] = {};
+                paths[_property][method].responses["200"]["content"][api.responses.content] = {
+
+                    schema: {
+                        type: api.responses.schema.type,
+                        properties: {},
+                    }
+                }
+                for (var ptr in api.responses.schema.properties) {
+                    paths[_property][method].responses["200"]["content"][api.responses.content]["schema"]["properties"][ptr] = {
+                        type: api.responses.schema.properties[ptr].type.toLowerCase()
+                    }
+                }
+
+
+                for (var property2 in api.errors) {
+                    const errorName = property2;
+
+                    const statusCode = api.errors[property2].status_code + "";
+
+                    const reason = api.errors[property2].reason;
+                    const schema = api.errors[property2].schema;
+                    paths[_property][method].responses[statusCode] = {};
+                    paths[_property][method].responses[statusCode]["description"] = errorName;
+                    paths[_property][method].responses[statusCode]["content"] = {};
+                    paths[_property][method].responses[statusCode]["content"]["application/json"] = {
+                        schema: {
+                            type: schema.type,
+                            properties: {},
+                        }
+                    }
+                    for (var ptr in schema.properties) {
+                        paths[_property][method].responses[statusCode]["content"]["application/json"]["schema"]["properties"][ptr] = {
+                            type: schema.properties[ptr].type.toLowerCase()
+                        }
+                    }
+                }
+            }
+
+
+            paths[_property][method].parameters = [];
             if (method == "get" || method == "delete") {
                 for (var parmName in api.parameters) {
                     const parm = api.parameters[parmName];
 
-                    paths[property][method].parameters.push(
+                    paths[_property][method].parameters.push(
                         {
                             name: parmName,
                             in: "query",
@@ -150,10 +208,10 @@ function createPostmanImport(apiSpecList, title, stage, _version, host) {
                         requireds.push(parmName);
                     }
                     proprs[parmName] = {
-                        type: parm.type
+                        type: parm.type.toLowerCase()
                     }
                 }
-                paths[property][method].requestBody = {
+                paths[_property][method].requestBody = {
                     required: true,
                     content: {
                         "application/json": {
@@ -193,7 +251,7 @@ function createPostmanImport(apiSpecList, title, stage, _version, host) {
             }
         }
     }
-    return (JSON.stringify(all));
+    return all;
 }
 function sortApiSpecListByPath(apiSpecList) {
     let obj = {};
@@ -279,7 +337,7 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                         funcObject.events.push(
                             {
                                 httpApi: {
-                                    path: `/${item.method == "*" ? "any" : item.method.toLowerCase()}/${item.uri}`,
+                                    path: `/\${opt:stage, "dev"}/${item.uri}`,
                                     method: `${item.method.toLowerCase()}`,
                                     cors: true,
                                 }
@@ -305,4 +363,4 @@ async function printServerlessFunction(templateFile, apiSpecList) {
     fs.writeFileSync(`serverless.yml`, yamlStr, 'utf8');
 }
 module.exports.generateServerlessFunction = generateServerlessFunction;
-
+module.exports.generateExportFile = generateExportFile;

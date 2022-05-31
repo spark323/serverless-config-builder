@@ -9,6 +9,8 @@ let templateFile = (argv.t) ? argv.t : "serverless_template.yml";
 
 
 
+(argv.x) ? builder.generateExportFile() : builder.generateServerlessFunction(`./${templateFile}`);
+
 //console.log(graphql);
 
-builder.generateServerlessFunction(`./${templateFile}`);
+
