@@ -52,13 +52,8 @@ async function generateExportFile() {
 
 async function uploadToNotion(secret) {
     const apiSpecList = await getApiSepcList();
-    let contents = createNotionTable(apiSpecList);
-    const { Client } = require('@notionhq/client');
+    await createNotionTable(apiSpecList, secret);
 
-    const notion = new Client({ auth: secret });
-    const response = await notion.pages.create(contents)
-    console.log(response);
-    return contents;
 }
 
 
@@ -118,403 +113,93 @@ async function getApiSepcList() {
     });
     return apiSpecList;
 }
+function generateNotionCodeBlock(key, text) {
 
-function generateNotionRow(text) {
     return {
-        "type": "text",
-        "text": {
-            "content": text,
-            "link": null
-        },
-        "annotations": {
-            "bold": false,
-            "italic": false,
-            "strikethrough": false,
-            "underline": false,
-            "code": false,
-            "color": "default"
-        },
-        "plain_text": text,
-        "href": null
+        "object": "block",
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [{
+                "type": "text",
+                "text": {
+                    "content": key,
+                    "link": null
+                }
+            }],
+            "color": "default",
+            "children": [{
+                "object": "block",
+                "type": "code",
+
+                "code": {
+                    "rich_text": [{
+                        "type": "text",
+                        "text": {
+                            "content": text
+                        }
+                    }],
+                    "language": "javascript"
+                }
+            }]
+        }
+    }
+
+}
+
+function generateNotionBulletItem(key, item) {
+    return {
+        "object": "block",
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [{
+                "type": "text",
+                "text": {
+                    "content": key,
+                    "link": null
+                }
+            }],
+            "color": "default",
+            "children": [{
+                "object": "block",
+                "paragraph": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": `${item}`,
+                            }
+                        }
+                    ],
+                    "color": "default"
+                }
+            }]
+        }
     }
 }
-function createNotionTable(apiSpecList) {
+async function createNotionTable(apiSpecList, secret) {
+
+    const { Client } = require('@notionhq/client');
+
+    const notion = new Client({ auth: secret });
+    const nowFormat = moment().format("YYYY-MM-DD HH:mm:ss");
+
+
     const projectInfo = yaml.load(fs.readFileSync('./info.yml', "utf8"));
     const stage = projectInfo.stage;
     const title = projectInfo.title;
     const _version = projectInfo.version;
     const host = projectInfo.host;
-    const description = projectInfo.description + moment().format("YYYY-MM-DD HH:mm:ss");
+    const description = `${projectInfo.description}(${nowFormat})`;
     const contact = projectInfo.contact;
     const version = `${stage}-${_version}`;
     const servers = [{ url: host }];
     const schemes = ["https"];
 
     const database_id = projectInfo.database_id;
+    const page_id = projectInfo.page_id;
 
 
-    let talbeContents = [
-        {
-            "type": "table_row",
-            "table_row": {
-                "cells": [
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "번호",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "번호",
-                            "href": null
-                        }
-                    ],
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "종류",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "종류",
-                            "href": null
-                        }
-                    ],
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "명칭",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "명칭",
-                            "href": null
-                        }
-                    ],
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "API_URI",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "API_URI",
-                            "href": null
-                        }
-                    ],
-
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "Method",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "Method",
-                            "href": null
-                        }
-                    ],
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "기능",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "기능",
-                            "href": null
-                        }
-                    ],
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "요청 파라메터 리스트",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "요청 파라메터 리스트",
-                            "href": null
-                        }
-                    ],
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "응답 키 리스트",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "응답 키 리스트",
-                            "href": null
-                        }
-                    ],
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "인증 필요 여부",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "인증 필요 여부",
-                            "href": null
-                        }
-                    ],
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "에러 목록",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "에러 목록",
-                            "href": null
-                        }
-                    ],
-                    [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": "비고",
-                                "link": null
-                            },
-                            "annotations": {
-                                "bold": true,
-                                "italic": false,
-                                "strikethrough": false,
-                                "underline": false,
-                                "code": false,
-                                "color": "default"
-                            },
-                            "plain_text": "비고",
-                            "href": null
-                        }
-                    ]
-                ]
-            }
-        }
-    ]
-    //
-    let cnt = 0;
-    for (var property in apiSpecList) {
-        let apiSpec = apiSpecList[property];
-
-        if (apiSpec.length > 0) {
-
-            apiSpec.forEach((obj) => {
-                const item = obj.item;
-
-                let oneRow = {
-                    "type": "table_row",
-                    "table_row": {
-                        "cells": [
-
-                        ]
-                    }
-                }
-
-
-                if (!item) {
-
-
-                    oneRow.table_row.cells.push([generateNotionRow(`${cnt++}`)])
-                    oneRow.table_row.cells.push([generateNotionRow(`unknown`)]);
-                    oneRow.table_row.cells.push([generateNotionRow(obj.path)]);
-
-                }
-                else if (item.hide) {
-                }
-                else if (!item.type) {
-                    oneRow.table_row.cells.push([generateNotionRow(`${cnt++}`)])
-                    oneRow.table_row.cells.push([generateNotionRow(`unknown`)]);
-                    oneRow.table_row.cells.push([generateNotionRow(obj.path)]);
-                }
-                else {
-
-
-                    oneRow.table_row.cells.push([generateNotionRow(`${cnt++}`)])
-                    oneRow.table_row.cells.push([generateNotionRow(item.type)]);
-                    oneRow.table_row.cells.push([generateNotionRow(item.name)]);
-                    oneRow.table_row.cells.push([generateNotionRow(item.uri)]);
-                    oneRow.table_row.cells.push([generateNotionRow(item.method)]);
-                    oneRow.table_row.cells.push([generateNotionRow(item.desc)]);
-
-
-
-
-                    //파라메터
-                    let parmText = ""
-                    for (var property in item.parameters) {
-                        const obj = item.parameters[property];
-                        //minmax
-                        let minMax = "";
-                        if (obj.min != undefined && obj.max != undefined) {
-                            minMax = `(${obj.min}~${obj.max}${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
-                        }
-                        else if (obj.min != undefined) {
-                            minMax = `(${obj.min}~${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
-                        }
-                        else if (obj.max != undefined) {
-                            minMax = `(~${obj.max}${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
-                        }
-                        parmText += `${property}[${obj.type}]${!obj.req ? "(Optional)" : ""}:${obj.desc}${minMax == "" ? "" : minMax}`
-
-                        parmText += `\n`
-                        if (obj.sub) {
-
-
-
-                            for (var prop in obj.sub) {
-                                const obj2 = obj.sub[prop];
-                                parmText += `${prop}[${obj2.type}](${!obj2.req ? "Optional" : ""}):${obj2.desc}\n`
-                            }
-
-                        }
-                    }
-                    oneRow.table_row.cells.push([generateNotionRow(parmText)]);
-
-
-
-                    let responseText = ""
-                    for (var property in item.responses) {
-                        const obj = item.responses[property];
-                        responseText = `${property}[${obj.type}]:${obj.desc}`
-
-                        if (obj.sub) {
-                            responseText += `\n`
-                            for (var prop in obj.sub) {
-                                const obj2 = obj.sub[prop];
-                                responseText = `${prop}[${obj2.type}]${obj2.searchable ? "(Searchable)" : ""}:${obj2.desc}\n`
-                            }
-
-                        }
-                    }
-                    oneRow.table_row.cells.push([generateNotionRow(responseText)]);
-
-                    oneRow.table_row.cells.push([generateNotionRow(item.noAuth ? "True" : "False")]);
-
-
-
-                    let errorText = ""
-
-                    //에러
-
-                    if (item && item.errors) {
-                        for (var property in item.errors) {
-                            const obj = item.errors[property];
-
-                            // apiName.push(item.name)
-                            // errorTitles.push(property);
-                            // errorValues.push(obj.reason);
-
-                            errorText += `${property}(${obj.status_code}):${obj.reason}\n`
-
-                        }
-                        oneRow.table_row.cells.push([generateNotionRow(errorText)]);
-                    }
-                    else {
-                        oneRow.table_row.cells.push([generateNotionRow("")]);
-                    }
-
-
-
-
-
-
-
-
-                    oneRow.table_row.cells.push([generateNotionRow(item.comment ? item.comment : "")]);
-                    talbeContents.push(oneRow);
-                }
-
-            })
-        }
-    }
-
-
-
-    //
-
-
-    let contents = {
+    //우선 DB에 페이지를 생성한다.
+    let createMainPage = {
         "parent": {
             "type": "database_id",
             "database_id": database_id
@@ -525,6 +210,15 @@ function createNotionTable(apiSpecList) {
                     {
                         "text": {
                             "content": `${title}-v${_version}`
+                        }
+                    }
+                ]
+            },
+            "Stage": {
+                "rich_text": [
+                    {
+                        "text": {
+                            "content": stage
                         }
                     }
                 ]
@@ -558,29 +252,337 @@ function createNotionTable(apiSpecList) {
                     "rich_text": [
                         {
                             "text": {
-                                "content": `수정시간</b>:${moment().format("YYYY-MM-DD HH:mm:ss")}`,
-
+                                "content": `생성 시간:${nowFormat} `
+                                //Notion API의 문제로 테이블 column 순서가 올바르게 표현되지 않을 수 있습니다. 처음 보신분은 Seq,Name,Type,Method,Description 순서로 변경해주세요.`,
                             }
                         }
                     ],
                     "color": "default"
                 }
-            },
+            }
+        ],
+    }
+    const mainPageResponse = await notion.pages.create(createMainPage)
+    console.log(mainPageResponse);
+    let mainPageId = mainPageResponse.id;
+
+
+    let createDBPayload = {
+        "parent": {
+            "type": "page_id",
+            "page_id": mainPageId
+        },
+
+        "title": [
             {
-                "object": "block",
-                "type": "table",
-                "table": {
-                    "table_width": 11,
-                    "has_column_header": true,
-                    "has_row_header": false,
-                    "children": talbeContents
+                "type": "text",
+                "text": {
+                    "content": `${title}-v${_version}`,
+                    "link": null
+                }
+            }
+        ],
+        "is_inline": true,
+        "properties": {
+
+            "Name": {
+                "title": {}
+            },
+            "Type": {
+                "rich_text": {}
+            },
+
+            "Method": {
+                "select": {
+                    "options": [
+                        {
+                            "name": "get",
+                            "color": "green"
+                        },
+                        {
+                            "name": "put",
+                            "color": "red"
+                        },
+                        {
+                            "name": "post",
+                            "color": "yellow"
+                        },
+                        {
+                            "name": "put",
+                            "color": "blue"
+                        }
+                        ,
+                        {
+                            "name": "delete",
+                            "color": "red"
+                        }
+                    ]
                 }
             },
-        ],
+            "Description": {
+                "rich_text": {}
+            },
+            "Seq": {
+                "rich_text": {}
+            },
+            // "Food group": {
+
+            // },
+            // "Price": {
+            //     "number": {
+            //         "format": "dollar"
+            //     }
+            // },
+            // "Last ordered": {
+            //     "date": {}
+            // },
+            // "Meals": {
+            //     "relation": {
+            //         "database_id": "668d797c-76fa-4934-9b05-ad288df2d136",
+            //         "single_property": {}
+            //     }
+            // },
+            // "Number of meals": {
+            //     "rollup": {
+            //         "rollup_property_name": "Name",
+            //         "relation_property_name": "Meals",
+            //         "function": "count"
+            //     }
+            // },
+            // "Store availability": {
+            //     "type": "multi_select",
+            //     "multi_select": {
+            //         "options": [
+            //             {
+            //                 "name": "Duc Loi Market",
+            //                 "color": "blue"
+            //             },
+            //             {
+            //                 "name": "Rainbow Grocery",
+            //                 "color": "gray"
+            //             },
+            //             {
+            //                 "name": "Nijiya Market",
+            //                 "color": "purple"
+            //             },
+            //             {
+            //                 "name": "Gus'\''s Community Market",
+            //                 "color": "yellow"
+            //             }
+            //         ]
+            //     }
+            // },
+            // "+1": {
+            //     "people": {}
+            // },
+            // "Photo": {
+            //     "files": {}
+            // }
+        }
+    }
+    const dbresponse = await notion.databases.create(createDBPayload)
+
+    const mainDBId = dbresponse.id;
+
+    let cnt = 0;
+    for (var property in apiSpecList) {
+        let apiSpec = apiSpecList[property];
+        if (apiSpec.length > 0) {
+            apiSpec.forEach(() => {
+                cnt++;
+            })
+
+        }
+    }
+    cnt -= 1;
+
+    //
+
+    for (var property in apiSpecList) {
+        let apiSpec = apiSpecList[property];
+        if (apiSpec.length > 0) {
+            await apiSpec.reduce(async (previousPromise2, obj) => {
+                await previousPromise2;
+                return new Promise(async (resolve2, reject2) => {
+                    const item = obj.item;
+
+                    try {
+
+                        // oneRow.table_row.cells.push([generateNotionRow(`${cnt++}`)])
+                        // oneRow.table_row.cells.push([generateNotionRow(item.name)]);
+                        // oneRow.table_row.cells.push([generateNotionRow(item.type)]);
+                        // oneRow.table_row.cells.push([generateNotionRow(item.desc)]);
+                        // oneRow.table_row.cells.push([generateNotionRow(item.method)]);
+                        let createSubPage = {
+                            "parent": {
+                                "type": "database_id",
+                                "database_id": mainDBId
+                            },
+                            "properties": {
+                                "Seq": {
+                                    "rich_text": [
+                                        {
+                                            "text": {
+                                                "content": `${cnt--}`
+                                            }
+                                        }
+                                    ]
+                                },
+                                "Name": {
+                                    "title": [
+                                        {
+                                            "text": {
+                                                "content": `${item.name}`
+                                            }
+                                        }
+                                    ]
+                                },
+
+                                "Method": {
+
+                                    "select": {
+                                        "name": item.method.toLowerCase()
+                                    }
+
+                                },
+                                "Description": {
+                                    "rich_text": [
+                                        {
+                                            "text": {
+                                                "content": item.desc
+                                            }
+                                        }
+                                    ]
+                                },
+                                "Type": {
+                                    "rich_text": [
+                                        {
+                                            "text": {
+                                                "content": `${item.type}`
+                                            }
+                                        }
+                                    ]
+                                },
+                            },
+                            "children": [
+                                {
+                                    "object": "block",
+                                    "heading_2": {
+                                        "rich_text": [
+                                            {
+                                                "text": {
+                                                    "content": `${item.name}`
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "object": "block",
+                                    "paragraph": {
+                                        "rich_text": [
+                                            {
+                                                "text": {
+                                                    "content": `${item.desc}`,
+                                                }
+                                            }
+                                        ],
+                                        "color": "default"
+                                    }
+                                }
+                            ],
+                        }
+
+
+                        createSubPage.children.push(generateNotionBulletItem("URI", item.uri + "\n"));
+
+
+                        createSubPage.children.push(generateNotionBulletItem("Method", item.method + "\n"));
+
+                        let parmText = ""
+                        for (var property in item.parameters) {
+                            const obj = item.parameters[property];
+                            //minmax
+                            let minMax = "";
+                            if (obj.min != undefined && obj.max != undefined) {
+                                minMax = `(${obj.min}~${obj.max}${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
+                            }
+                            else if (obj.min != undefined) {
+                                minMax = `(${obj.min}~${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
+                            }
+                            else if (obj.max != undefined) {
+                                minMax = `(~${obj.max}${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
+                            }
+                            parmText += `${property}[${obj.type}]${!obj.req ? "(Optional)" : ""}:${obj.desc}${minMax == "" ? "" : minMax}`
+
+                            parmText += `\n`
+                            if (obj.sub) {
+
+
+
+                                for (var prop in obj.sub) {
+                                    const obj2 = obj.sub[prop];
+                                    parmText += `${prop}[${obj2.type}](${!obj2.req ? "Optional" : ""}):${obj2.desc}\n`
+                                }
+
+                            }
+                        }
+                        createSubPage.children.push(generateNotionBulletItem("parameter", parmText));
+
+
+
+
+                        //에러
+                        let errorText = ""
+
+                        if (item && item.errors) {
+                            for (var property in item.errors) {
+                                const obj = item.errors[property];
+
+                                // apiName.push(item.name)
+                                // errorTitles.push(property);
+                                // errorValues.push(obj.reason);
+
+                                errorText += `${property}(${obj.status_code}):${obj.reason}\n`
+
+                            }
+                            createSubPage.children.push(generateNotionBulletItem("error", errorText));
+                        }
+
+
+                        let responseText = ""
+                        for (var property in item.responses) {
+                            const obj = item.responses[property];
+                            responseText = `${property}[${obj.type}]:${obj.desc}`
+
+                            if (obj.sub) {
+
+                                for (var prop in obj.sub) {
+                                    const obj2 = obj.sub[prop];
+                                    responseText = `${prop}[${obj2.type}]${obj2.searchable ? "(Searchable)" : ""}:${obj2.desc}\n`
+                                }
+
+                            }
+                        }
+                        // console.log(JSON.stringify(item.responses));
+                        createSubPage.children.push(generateNotionCodeBlock("Response", JSON.stringify(item.responses, null, 2)));
+
+
+                        console.log(createSubPage);
+                        const response = await notion.pages.create(createSubPage)
+
+                        resolve2("ok")
+                    } catch (e) {
+                        console.log(e);
+                        reject2();
+                    }
+                })
+            }, Promise.resolve());
+        }
     }
 
 
-    return contents;
+
 }
 //[todo4: 포스트맨에 Export 기능 추가하기]
 function createPostmanImport(apiSpecList) {
