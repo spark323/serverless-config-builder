@@ -7,10 +7,12 @@ const argv = yargs(hideBin(process.argv)).argv
 
 let templateFile = (argv.t) ? argv.t : "serverless_template.yml";
 
-
-
-(argv.x) ? builder.generateExportFile() : builder.generateServerlessFunction(`./${templateFile}`);
-
+if (argv.n) {
+    builder.uploadToNotion(argv.n);
+}
+else {
+    (argv.x) ? builder.generateExportFile() : builder.generateServerlessFunction(`./${templateFile}`);
+}
 //console.log(graphql);
 
 

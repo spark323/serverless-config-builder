@@ -2,7 +2,7 @@ const yaml = require('js-yaml');
 const fs = require('fs');
 const fspr = require('fs').promises;
 var path = require('path')
-
+var moment = require('moment');
 
 function replaceAll(str, find, replace) {
     return str.replace(new RegExp(find, 'g'), replace);
@@ -49,6 +49,20 @@ async function generateExportFile() {
     let yamlStr = yaml.dump(createPostmanImport(apiSpecList));
     fs.writeFileSync(`export.yml`, yamlStr, 'utf8');
 }
+
+async function uploadToNotion(secret) {
+    const apiSpecList = await getApiSepcList();
+    let contents = createNotionTable(apiSpecList);
+    const { Client } = require('@notionhq/client');
+
+    const notion = new Client({ auth: secret });
+    const response = await notion.pages.create(contents)
+    console.log(response);
+    return contents;
+}
+
+
+
 
 /*
 
@@ -105,6 +119,469 @@ async function getApiSepcList() {
     return apiSpecList;
 }
 
+function generateNotionRow(text) {
+    return {
+        "type": "text",
+        "text": {
+            "content": text,
+            "link": null
+        },
+        "annotations": {
+            "bold": false,
+            "italic": false,
+            "strikethrough": false,
+            "underline": false,
+            "code": false,
+            "color": "default"
+        },
+        "plain_text": text,
+        "href": null
+    }
+}
+function createNotionTable(apiSpecList) {
+    const projectInfo = yaml.load(fs.readFileSync('./info.yml', "utf8"));
+    const stage = projectInfo.stage;
+    const title = projectInfo.title;
+    const _version = projectInfo.version;
+    const host = projectInfo.host;
+    const description = projectInfo.description + moment().format("YYYY-MM-DD HH:mm:ss");
+    const contact = projectInfo.contact;
+    const version = `${stage}-${_version}`;
+    const servers = [{ url: host }];
+    const schemes = ["https"];
+
+    const database_id = projectInfo.database_id;
+
+
+    let talbeContents = [
+        {
+            "type": "table_row",
+            "table_row": {
+                "cells": [
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "번호",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "번호",
+                            "href": null
+                        }
+                    ],
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "종류",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "종류",
+                            "href": null
+                        }
+                    ],
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "명칭",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "명칭",
+                            "href": null
+                        }
+                    ],
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "API_URI",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "API_URI",
+                            "href": null
+                        }
+                    ],
+
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Method",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "Method",
+                            "href": null
+                        }
+                    ],
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "기능",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "기능",
+                            "href": null
+                        }
+                    ],
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "요청 파라메터 리스트",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "요청 파라메터 리스트",
+                            "href": null
+                        }
+                    ],
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "응답 키 리스트",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "응답 키 리스트",
+                            "href": null
+                        }
+                    ],
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "인증 필요 여부",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "인증 필요 여부",
+                            "href": null
+                        }
+                    ],
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "에러 목록",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "에러 목록",
+                            "href": null
+                        }
+                    ],
+                    [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "비고",
+                                "link": null
+                            },
+                            "annotations": {
+                                "bold": true,
+                                "italic": false,
+                                "strikethrough": false,
+                                "underline": false,
+                                "code": false,
+                                "color": "default"
+                            },
+                            "plain_text": "비고",
+                            "href": null
+                        }
+                    ]
+                ]
+            }
+        }
+    ]
+    //
+    let cnt = 0;
+    for (var property in apiSpecList) {
+        let apiSpec = apiSpecList[property];
+
+        if (apiSpec.length > 0) {
+
+            apiSpec.forEach((obj) => {
+                const item = obj.item;
+
+                let oneRow = {
+                    "type": "table_row",
+                    "table_row": {
+                        "cells": [
+
+                        ]
+                    }
+                }
+
+
+                if (!item) {
+
+
+                    oneRow.table_row.cells.push([generateNotionRow(`${cnt++}`)])
+                    oneRow.table_row.cells.push([generateNotionRow(`unknown`)]);
+                    oneRow.table_row.cells.push([generateNotionRow(obj.path)]);
+
+                }
+                else if (item.hide) {
+                }
+                else if (!item.type) {
+                    oneRow.table_row.cells.push([generateNotionRow(`${cnt++}`)])
+                    oneRow.table_row.cells.push([generateNotionRow(`unknown`)]);
+                    oneRow.table_row.cells.push([generateNotionRow(obj.path)]);
+                }
+                else {
+
+
+                    oneRow.table_row.cells.push([generateNotionRow(`${cnt++}`)])
+                    oneRow.table_row.cells.push([generateNotionRow(item.type)]);
+                    oneRow.table_row.cells.push([generateNotionRow(item.name)]);
+                    oneRow.table_row.cells.push([generateNotionRow(item.uri)]);
+                    oneRow.table_row.cells.push([generateNotionRow(item.method)]);
+                    oneRow.table_row.cells.push([generateNotionRow(item.desc)]);
+
+
+
+
+                    //파라메터
+                    let parmText = ""
+                    for (var property in item.parameters) {
+                        const obj = item.parameters[property];
+                        //minmax
+                        let minMax = "";
+                        if (obj.min != undefined && obj.max != undefined) {
+                            minMax = `(${obj.min}~${obj.max}${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
+                        }
+                        else if (obj.min != undefined) {
+                            minMax = `(${obj.min}~${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
+                        }
+                        else if (obj.max != undefined) {
+                            minMax = `(~${obj.max}${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
+                        }
+                        parmText += `${property}[${obj.type}]${!obj.req ? "(Optional)" : ""}:${obj.desc}${minMax == "" ? "" : minMax}`
+
+                        parmText += `\n`
+                        if (obj.sub) {
+
+
+
+                            for (var prop in obj.sub) {
+                                const obj2 = obj.sub[prop];
+                                parmText += `${prop}[${obj2.type}](${!obj2.req ? "Optional" : ""}):${obj2.desc}\n`
+                            }
+
+                        }
+                    }
+                    oneRow.table_row.cells.push([generateNotionRow(parmText)]);
+
+
+
+                    let responseText = ""
+                    for (var property in item.responses) {
+                        const obj = item.responses[property];
+                        responseText = `${property}[${obj.type}]:${obj.desc}`
+
+                        if (obj.sub) {
+                            responseText += `\n`
+                            for (var prop in obj.sub) {
+                                const obj2 = obj.sub[prop];
+                                responseText = `${prop}[${obj2.type}]${obj2.searchable ? "(Searchable)" : ""}:${obj2.desc}\n`
+                            }
+
+                        }
+                    }
+                    oneRow.table_row.cells.push([generateNotionRow(responseText)]);
+
+                    oneRow.table_row.cells.push([generateNotionRow(item.noAuth ? "True" : "False")]);
+
+
+
+                    let errorText = ""
+
+                    //에러
+
+                    if (item && item.errors) {
+                        for (var property in item.errors) {
+                            const obj = item.errors[property];
+
+                            // apiName.push(item.name)
+                            // errorTitles.push(property);
+                            // errorValues.push(obj.reason);
+
+                            errorText += `${property}(${obj.status_code}):${obj.reason}\n`
+
+                        }
+                        oneRow.table_row.cells.push([generateNotionRow(errorText)]);
+                    }
+                    else {
+                        oneRow.table_row.cells.push([generateNotionRow("")]);
+                    }
+
+
+
+
+
+
+
+
+                    oneRow.table_row.cells.push([generateNotionRow(item.comment ? item.comment : "")]);
+                    talbeContents.push(oneRow);
+                }
+
+            })
+        }
+    }
+
+
+
+    //
+
+
+    let contents = {
+        "parent": {
+            "type": "database_id",
+            "database_id": database_id
+        },
+        "properties": {
+            "Name": {
+                "title": [
+                    {
+                        "text": {
+                            "content": `${title}-v${_version}`
+                        }
+                    }
+                ]
+            },
+            "Description": {
+                "rich_text": [
+                    {
+                        "text": {
+                            "content": description
+                        }
+                    }
+                ]
+            }
+        },
+        "children": [
+            {
+                "object": "block",
+                "heading_2": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": "이 페이지는 API로 자동 생성된 문서입니다."
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "object": "block",
+                "paragraph": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": `수정시간</b>:${moment().format("YYYY-MM-DD HH:mm:ss")}`,
+
+                            }
+                        }
+                    ],
+                    "color": "default"
+                }
+            },
+            {
+                "object": "block",
+                "type": "table",
+                "table": {
+                    "table_width": 11,
+                    "has_column_header": true,
+                    "has_row_header": false,
+                    "children": talbeContents
+                }
+            },
+        ],
+    }
+
+
+    return contents;
+}
 //[todo4: 포스트맨에 Export 기능 추가하기]
 function createPostmanImport(apiSpecList) {
     const projectInfo = yaml.load(fs.readFileSync('./info.yml', "utf8"));
@@ -364,3 +841,4 @@ async function printServerlessFunction(templateFile, apiSpecList) {
 }
 module.exports.generateServerlessFunction = generateServerlessFunction;
 module.exports.generateExportFile = generateExportFile;
+module.exports.uploadToNotion = uploadToNotion;
