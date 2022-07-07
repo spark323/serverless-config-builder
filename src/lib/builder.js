@@ -240,7 +240,7 @@ async function createNotionTable(apiSpecList, secret) {
                     "rich_text": [
                         {
                             "text": {
-                                "content": "이 페이지는 API로 자동 생성된 문서입니다."
+                                "content": "이 페이지는 자동 생성된 문서입니다."
                             }
                         }
                     ]
