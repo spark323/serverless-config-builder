@@ -3,7 +3,6 @@ const fs = require('fs');
 const fspr = require('fs').promises;
 var path = require('path')
 var moment = require('moment');
-const { getTsconfig } = require('get-tsconfig');
 
 function replaceAll(str, find, replace) {
     return str.replace(new RegExp(find, 'g'), replace);
@@ -40,21 +39,21 @@ async function getFunctionList(dir, arr) {
 /*
 svlsbdr의 진입점
 */
-async function generateServerlessFunction(templateFile) {
+async function generateServerlessFunction(templateFile, srcPath = "./src/lambda") {
     //먼저 src/lambda 이하의 파일을 파싱해 apiSpec들을 가져와서
-    const apiSpecList = await getApiSepcList();
+    const apiSpecList = await getApiSepcList(srcPath);
     //serverless.yml로 프린트한다.
-    await printServerlessFunction(templateFile, apiSpecList);
+    await printServerlessFunction(templateFile, apiSpecList, srcPath);
 }
 
-async function generateExportFile() {
-    const apiSpecList = await getApiSepcList();
+async function generateExportFile(srcPath = "./src/lambda") {
+    const apiSpecList = await getApiSepcList(srcPath);
     let yamlStr = yaml.dump(createPostmanImport(apiSpecList));
     fs.writeFileSync(`export.yml`, yamlStr, 'utf8');
 }
 
 async function uploadToNotion(secret) {
-    const apiSpecList = await getApiSepcList();
+    const apiSpecList = await getApiSepcList(srcPath);
     await createNotionTable(apiSpecList, secret);
 
 }
@@ -66,18 +65,9 @@ async function uploadToNotion(secret) {
 
 serverless.yml 파일에 쓰기 전에 람다 함수의 목록을 작성한다.
 */
-async function getApiSepcList() {
+async function getApiSepcList(srcPath = "./src/lambda") {
     //[todo1: 소스파일 경로 지정할 수 있도록 변경]
-    let sourcePath;
-    // tsconfig.json이 존재할 경우 빌드 결과가 저장된 경로를 사용하도록 함
-    try {
-        let tsconfig = getTsconfig();
-        if (tsconfig !== null) {
-            sourcePath = `./${tsconfig.config.compilerOptions.outDir}/src/lambda`
-        }
-    } catch (error) {}
-    sourcePath = sourcePath || "./src/lambda"
-    let files = await getFunctionList(sourcePath, []);
+    let files = await getFunctionList(srcPath, []);
     let apiSpecList = { "nomatch": [], "error": [] };
     files.forEach((fileItem) => {
         const path = fileItem.path;
@@ -764,7 +754,7 @@ function sortApiSpecListByPath(apiSpecList) {
 /*
 가져온 apiSpec 리스트를 기반으로 serverless.yml파일을 만든다.
 */
-async function printServerlessFunction(templateFile, apiSpecList) {
+async function printServerlessFunction(templateFile, apiSpecList, srcPath = "./src/lambda") {
     //템플릿 파일을 읽는다.
     let serverlessTemplet1 = yaml.load(fs.readFileSync(templateFile, "utf8"))
     let functions = {};
@@ -782,7 +772,7 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                     const nameArr = item.name.split("/");
                     let funcObject = {
                         name: item.functionName ? item.functionName : (`\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`),
-                        handler: `src/lambda/${item.name}.handler`,
+                        handler: `${srcPath}/${item.name}.handler`,
                         events: [],
                     };
                     //[todo1: 소스파일 경로 지정할 수 있도록 변경]
