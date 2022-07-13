@@ -3,6 +3,7 @@ const fs = require('fs');
 const fspr = require('fs').promises;
 var path = require('path')
 var moment = require('moment');
+const { getTsconfig } = require('get-tsconfig');
 
 function replaceAll(str, find, replace) {
     return str.replace(new RegExp(find, 'g'), replace);
@@ -27,7 +28,9 @@ async function getFunctionList(dir, arr) {
             arr.concat(newar);
         }
         else {
-            arr.push({ path: file })
+            if (file.match(/.js$/)) {
+                arr.push({ path: file })
+            }
         }
     })
     await Promise.all(prom);
@@ -65,7 +68,16 @@ serverless.yml 파일에 쓰기 전에 람다 함수의 목록을 작성한다.
 */
 async function getApiSepcList() {
     //[todo1: 소스파일 경로 지정할 수 있도록 변경]
-    let files = await getFunctionList("./src/lambda", []);
+    let sourcePath;
+    // tsconfig.json이 존재할 경우 빌드 결과가 저장된 경로를 사용하도록 함
+    try {
+        let tsconfig = getTsconfig();
+        if (tsconfig !== null) {
+            sourcePath = `./${tsconfig.config.compilerOptions.outDir}/src/lambda`
+        }
+    } catch (error) {}
+    sourcePath = sourcePath || "./src/lambda"
+    let files = await getFunctionList(sourcePath, []);
     let apiSpecList = { "nomatch": [], "error": [] };
     files.forEach((fileItem) => {
         const path = fileItem.path;
