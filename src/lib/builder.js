@@ -52,7 +52,7 @@ async function generateExportFile(srcPath = "./src/lambda") {
     fs.writeFileSync(`export.yml`, yamlStr, 'utf8');
 }
 
-async function uploadToNotion(secret) {
+async function uploadToNotion(secret, srcPath = "./src/lambda") {
     const apiSpecList = await getApiSepcList(srcPath);
     await createNotionTable(apiSpecList, secret);
 
