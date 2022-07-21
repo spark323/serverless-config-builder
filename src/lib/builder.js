@@ -767,8 +767,8 @@ async function printServerlessFunction(templateFile, apiSpecList, srcPath = "./s
             //각 카테고리 별로..
             apiSpec.forEach(async (obj) => {
                 const item = obj.item;
-                //item의 method가 존재하고  disabled가 아니라면, 
-                if (item && (item.method) && (!item.disabled)) {
+                //item이 disabled가 아니라면, 
+                if (item && (!item.disabled)) {
                     const nameArr = item.name.split("/");
                     let funcObject = {
                         name: item.functionName ? item.functionName : (`\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`),
