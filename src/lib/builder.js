@@ -813,7 +813,7 @@ async function printServerlessFunction(templateFile, apiSpecList, srcPath = "./s
                     else if (item.type == "cognito") {
                         funcObject["events"].push({
                             cognitoUserPool: { 
-                                pool: item.poolName,
+                                pool: serverlessTemplet1.custom.apiSpec[item.poolNameRef],
                                 trigger: item.trigger,
                                 existing: true,
                             }
