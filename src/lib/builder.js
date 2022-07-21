@@ -811,27 +811,13 @@ async function printServerlessFunction(templateFile, apiSpecList, srcPath = "./s
                     }
                     //cognito user pool에 의해 트리거 되는 함수
                     else if (item.type == "cognito") {
-                        //user pool name을 명시할 경우, 즉 이 serverless에서 User Pool을 생성하는 것이 아닐 경우,
-                        if (item.poolName) {
-                            funcObject["events"].push({
-                                cognitoUserPool: { 
-                                    pool: item.poolName,
-                                    trigger: item.trigger,
-                                    existing: true,
-                                }
-                            })
-                        }
-                        //이 serverless에서 user pool을 생성하는 경우
-                        else {
-                            funcObject["events"].push({
-                                cognitoUserPool: { 
-                                    pool: { "Fn::GetAtt": [item.pool, "UserPoolName"] },
-                                    trigger: item.trigger,
-                                    existing: true,
-                                    forceDeploy: true
-                                }
-                            })
-                        }
+                        funcObject["events"].push({
+                            cognitoUserPool: { 
+                                pool: item.poolName,
+                                trigger: item.trigger,
+                                existing: true,
+                            }
+                        })
                     }
                     //어느 이벤트에도 트리거되지 않는 함수
                     else if (item.type == "pure") {
