@@ -807,6 +807,16 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                             })
                         }
                     }
+                    //cognito user pool에 의해 트리거 되는 함수
+                    else if (item.type == "cognito") {
+                        funcObject["events"].push({
+                            cognitoUserPool: { 
+                                pool: serverlessTemplet1.custom.apiSpec[item.poolNameRef],
+                                trigger: item.trigger,
+                                existing: true,
+                            }
+                        })
+                    }
                     //어느 이벤트에도 트리거되지 않는 함수
                     else if (item.type == "pure") {
                         catchAllMethod
@@ -818,7 +828,7 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                                 httpApi: {
                                     path: `/\${opt:stage, "dev"}/${item.uri}`,
                                     method: `${item.method.toLowerCase()}`,
-                                    cors: true,
+                                    authorizer: item.authorizer ? { name: item.authorizer } : undefined
                                 }
                             }
                         )

@@ -14,5 +14,3 @@ else {
     (argv.x) ? builder.generateExportFile() : builder.generateServerlessFunction(`./${templateFile}`);
 }
 //console.log(graphql);
-
-
