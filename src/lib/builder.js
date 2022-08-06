@@ -822,7 +822,7 @@ async function printServerlessFunction(templateFile, apiSpecList, srcPath = "./s
                     //step function에 의해 트리거 되는 함수
                     else if (item.type == "sfn") { 
                         // serverless_template.yml에 정의된 stepfunction에서 해당 state를 찾아서 functionName에 arn을 넣어준다
-                        serverlessTemplet1.stepFunctions.stateMachines[item.machineName].definition.States[item.stateName].Parameters.FunctionName = `\${self:resources.Outputs.${funcObject.name}.Value}`
+                        serverlessTemplet1.stepFunctions.stateMachines[item.machineName].definition.States[item.stateName].Parameters.FunctionName = `"Fn::GetAtt": [ ${funcObject.name}, Arn ]`
                     }
                     //어느 이벤트에도 트리거되지 않는 함수
                     else if (item.type == "pure") {
