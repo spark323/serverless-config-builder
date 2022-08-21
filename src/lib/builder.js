@@ -848,6 +848,14 @@ async function printServerlessFunction(templateFile, apiSpecList, srcPath = "./s
                     if (item.timeout) {
                         funcObject["timeout"] = parseInt(item.timeout);
                     }
+                    //메모리 설정이 존재한다면 메모리 추가
+                    if (item.memorySize) {
+                        funcObject["memorySize"] = parseInt(item.memorySize);
+                    }
+                    //스토리지 설정이 존재한다면 스토리지 추가
+                    if (item.ephemeralStorageSize) {
+                        funcObject["ephemeralStorageSize"] = parseInt(item.ephemeralStorageSize);
+                    }
                     functions[`${nameArr.join("_")}`] = funcObject;
                 }
             });
