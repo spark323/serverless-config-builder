@@ -817,9 +817,14 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                             }
                         })
                     }
+                    //step function에 의해 트리거 되는 함수
+                    else if (item.type == "sfn") { 
+                        // serverless_template.yml에 정의된 step function에서 해당 state를 찾아서 functionName에 arn을 넣어준다
+                        serverlessTemplet1.resources.Resources[item.machineName].Properties.Definition.States[item.stateName].Parameters.FunctionName = funcObject.name;
+                    }
                     //어느 이벤트에도 트리거되지 않는 함수
                     else if (item.type == "pure") {
-                        catchAllMethod
+                        
                     }
                     //별도의 명시가 없다면 모두 HTTP
                     else {
@@ -840,6 +845,14 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                     //타임아웃이 존재한다면, 타임아웃 추가
                     if (item.timeout) {
                         funcObject["timeout"] = parseInt(item.timeout);
+                    }
+                    //메모리 설정이 존재한다면 메모리 추가
+                    if (item.memorySize) {
+                        funcObject["memorySize"] = parseInt(item.memorySize);
+                    }
+                    //스토리지 설정이 존재한다면 스토리지 추가
+                    if (item.ephemeralStorageSize) {
+                        funcObject["ephemeralStorageSize"] = parseInt(item.ephemeralStorageSize);
                     }
                     functions[`${nameArr.join("_")}`] = funcObject;
                 }
