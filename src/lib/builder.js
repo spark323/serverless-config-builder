@@ -824,6 +824,15 @@ async function printServerlessFunction(templateFile, apiSpecList, srcPath = "./s
                         // serverless_template.yml에 정의된 step function에서 해당 state를 찾아서 functionName에 arn을 넣어준다
                         serverlessTemplet1.resources.Resources[item.machineName].Properties.Definition.States[item.stateName].Parameters.FunctionName = funcObject.name;
                     }
+                    //iot action에 의해 트리거 되는 함수
+                    else if (item.type == "iot") {
+                        funcObject["events"].push({
+                            iot: { 
+                                sql: `select *, topic() as topic from "${item.topic}"`,
+                                enabled: true,
+                            }
+                        })
+                    }
                     //어느 이벤트에도 트리거되지 않는 함수
                     else if (item.type == "pure") {
                         
@@ -863,7 +872,7 @@ async function printServerlessFunction(templateFile, apiSpecList, srcPath = "./s
     }
     serverlessTemplet1.functions = functions;
     //serverless.yml파일을 쓴다.
-    let yamlStr = yaml.dump(serverlessTemplet1);
+    let yamlStr = yaml.dump(serverlessTemplet1, { lineWidth: 140 });
     fs.writeFileSync(`serverless.yml`, yamlStr, 'utf8');
 }
 module.exports.generateServerlessFunction = generateServerlessFunction;
