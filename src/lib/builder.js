@@ -769,7 +769,7 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                 if (item && (item.method) && (!item.disabled)) {
                     const nameArr = item.name.split("/");
                     let funcObject = {
-                        name: item.functionName ? item.functionName : (`\${self:app}_\${opt:stage, "dev"}\${opt:ver, "1"}_${nameArr.join("_")}`),
+                        name: item.functionName ? item.functionName : (`\${self:app}_\${opt:stage, "dev"}\${param:ver, "1"}_${nameArr.join("_")}`),
                         handler: `src/lambda/${item.name}.handler`,
                         events: [],
                     };
@@ -810,7 +810,7 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                     //cognito user pool에 의해 트리거 되는 함수
                     else if (item.type == "cognito") {
                         funcObject["events"].push({
-                            cognitoUserPool: { 
+                            cognitoUserPool: {
                                 pool: serverlessTemplet1.custom.apiSpec[item.poolNameRef],
                                 trigger: item.trigger,
                                 existing: true,
@@ -818,14 +818,14 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                         })
                     }
                     //step function에 의해 트리거 되는 함수
-                    else if (item.type == "sfn") { 
+                    else if (item.type == "sfn") {
                         // serverless_template.yml에 정의된 step function에서 해당 state를 찾아서 functionName에 arn을 넣어준다
                         serverlessTemplet1.resources.Resources[item.machineName].Properties.Definition.States[item.stateName].Parameters.FunctionName = funcObject.name;
                     }
                     //iot action에 의해 트리거 되는 함수
                     else if (item.type == "iot") {
                         funcObject["events"].push({
-                            iot: { 
+                            iot: {
                                 sql: `select *, topic() as topic from "${item.topic}"`,
                                 enabled: true,
                             }
@@ -833,7 +833,7 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                     }
                     //어느 이벤트에도 트리거되지 않는 함수
                     else if (item.type == "pure") {
-                        
+
                     }
                     //별도의 명시가 없다면 모두 HTTP
                     else {
