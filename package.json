@@ -9,7 +9,7 @@
     "path": "^0.12.7",
     "yargs": "^16.2.0"
   },
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Helper to build serverelss.yml",
   "main": "src/lib/builder.js",
   "bin": {

@@ -787,7 +787,8 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                         funcObject.events.push({
                             s3: {
                                 bucket: `${item.event.bucket}`, event: item.event.event,
-                                existing: (item.event.existing) ? item.event.existing : false
+                                existing: (item.event.existing) ? item.event.existing : false,
+                                rules: (item.event.rules) ? item.event.rules : undefined
                             }
                         })
                     }
