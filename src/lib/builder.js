@@ -37,11 +37,11 @@ async function getFunctionList(dir, arr) {
 /*
 svlsbdr의 진입점
 */
-async function generateServerlessFunction(templateFile) {
+async function generateServerlessFunction(templateFile,stage="dev",version=1) {
     //먼저 src/lambda 이하의 파일을 파싱해 apiSpec들을 가져와서
     const apiSpecList = await getApiSepcList();
     //serverless.yml로 프린트한다.
-    await printServerlessFunction(templateFile, apiSpecList);
+    await printServerlessFunction(templateFile, apiSpecList,stage,version);
 }
 
 async function generateExportFile() {
@@ -752,7 +752,7 @@ function sortApiSpecListByPath(apiSpecList) {
 /*
 가져온 apiSpec 리스트를 기반으로 serverless.yml파일을 만든다.
 */
-async function printServerlessFunction(templateFile, apiSpecList) {
+async function printServerlessFunction(templateFile, apiSpecList,stage,version) {
     //템플릿 파일을 읽는다.
     let serverlessTemplet1 = yaml.load(fs.readFileSync(templateFile, "utf8"))
     let functions = {};
@@ -769,7 +769,7 @@ async function printServerlessFunction(templateFile, apiSpecList) {
                 if (item && (item.method) && (!item.disabled)) {
                     const nameArr = item.name.split("/");
                     let funcObject = {
-                        name: item.functionName ? item.functionName : (`\${self:app}_\${opt:stage, "dev"}\${param:ver, "1"}_${nameArr.join("_")}`),
+                        name: item.functionName ? item.functionName : (`\${self:app}_\${opt:stage, "dev"}${version}_${nameArr.join("_")}`),
                         handler: `src/lambda/${item.name}.handler`,
                         events: [],
                     };
@@ -870,6 +870,7 @@ async function printServerlessFunction(templateFile, apiSpecList) {
         }
     }
     serverlessTemplet1.functions = functions;
+    serverlessTemplet1.provider.stage=`${stage}-${version}`;
     //serverless.yml파일을 쓴다.
     let yamlStr = yaml.dump(serverlessTemplet1, { lineWidth: 140 });
     fs.writeFileSync(`serverless.yml`, yamlStr, 'utf8');
