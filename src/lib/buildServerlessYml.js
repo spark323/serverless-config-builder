@@ -11,7 +11,7 @@ if (argv.n) {
     builder.uploadToNotion(argv.n);
 }
 else {
-    (argv.x) ? builder.generateExportFile() : builder.generateServerlessFunction(`./${templateFile}`, process.env.STAGE ? process.env.STAGE : argv.stage, process.env.VER ? process.env.VER : argv.ver);
+    (argv.x) ? builder.generateExportFile() : builder.generateServerlessFunction(`./${templateFile}`, argv.stage ? argv.stage : process.env.STAGE, argv.ver ? argv.ver : process.env.VER);
 }
 
 
