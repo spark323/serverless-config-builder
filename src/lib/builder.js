@@ -50,9 +50,9 @@ async function generateExportFile() {
     fs.writeFileSync(`export.yml`, yamlStr, 'utf8');
 }
 
-async function uploadToNotion(secret) {
+async function uploadToNotion(secret, stage, ver) {
     const apiSpecList = await getApiSepcList();
-    await createNotionTable(apiSpecList, secret);
+    await createNotionTable(apiSpecList, secret, stage, ver);
 
 }
 
@@ -145,7 +145,23 @@ function generateNotionCodeBlock(key, text) {
     }
 
 }
-
+//https://developers.notion.com/reference/block
+function generateSingleNotionBulletItem(key) {
+    return {
+        "object": "block",
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [{
+                "type": "text",
+                "text": {
+                    "content": key,
+                    "link": null
+                }
+            }],
+            "color": "default",
+        }
+    }
+}
 function generateNotionBulletItem(key, item) {
     return {
         "object": "block",
@@ -175,7 +191,48 @@ function generateNotionBulletItem(key, item) {
         }
     }
 }
-async function createNotionTable(apiSpecList, secret) {
+function generateEmptyItem(key, items) {
+    let org = {
+        "object": "block",
+        "paragraph": {
+            "rich_text": [
+                {
+                    "text": {
+                        "content": ``,
+                    }
+                }
+            ],
+            "color": "default"
+        }
+    }
+    return org;
+}
+function generateNotionBulletWithChilderenItem(key, items) {
+    let org = {
+        "object": "block",
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [{
+                "type": "text",
+                "text": {
+                    "content": key,
+                    "link": null
+                }
+            }],
+            "color": "default",
+            "children": []
+        }
+    }
+
+    items.forEach((element) => {
+        org.bulleted_list_item.children.push(
+
+            element
+        )
+    })
+    return org;
+}
+async function createNotionTable(apiSpecList, secret, stage, ver) {
 
     const { Client } = require('@notionhq/client');
 
@@ -184,9 +241,9 @@ async function createNotionTable(apiSpecList, secret) {
 
 
     const projectInfo = yaml.load(fs.readFileSync('./info.yml', "utf8"));
-    const stage = projectInfo.stage;
+
     const title = projectInfo.title;
-    const _version = projectInfo.version;
+    const _version = ver;
     const host = projectInfo.host;
     const description = `${projectInfo.description}(${nowFormat})`;
     const contact = projectInfo.contact;
@@ -209,7 +266,7 @@ async function createNotionTable(apiSpecList, secret) {
                 "title": [
                     {
                         "text": {
-                            "content": `${title}-v${_version}`
+                            "content": `${title}-${stage}-${_version}`
                         }
                     }
                 ]
@@ -219,6 +276,15 @@ async function createNotionTable(apiSpecList, secret) {
                     {
                         "text": {
                             "content": stage
+                        }
+                    }
+                ]
+            },
+            "Version": {
+                "rich_text": [
+                    {
+                        "text": {
+                            "content": _version
                         }
                     }
                 ]
@@ -263,7 +329,7 @@ async function createNotionTable(apiSpecList, secret) {
         ],
     }
     const mainPageResponse = await notion.pages.create(createMainPage)
-    console.log(mainPageResponse);
+    // console.log(mainPageResponse);
     let mainPageId = mainPageResponse.id;
 
 
@@ -277,7 +343,7 @@ async function createNotionTable(apiSpecList, secret) {
             {
                 "type": "text",
                 "text": {
-                    "content": `${title}-v${_version}`,
+                    "content": `${title}-${stage}-${_version}`,
                     "link": null
                 }
             }
@@ -405,7 +471,11 @@ async function createNotionTable(apiSpecList, secret) {
                 await previousPromise2;
                 return new Promise(async (resolve2, reject2) => {
                     const item = obj.item;
-
+                    // console.log(item.event[0]);
+                    // if ((item.type && item.type.toLowerCase() != "rest") || (item.event[0].type && item.event[0].type.toLowerCase() != "rest")) {
+                    //     resolve2("ok")
+                    //     return;
+                    // }
                     try {
 
                         // oneRow.table_row.cells.push([generateNotionRow(`${cnt++}`)])
@@ -413,6 +483,10 @@ async function createNotionTable(apiSpecList, secret) {
                         // oneRow.table_row.cells.push([generateNotionRow(item.type)]);
                         // oneRow.table_row.cells.push([generateNotionRow(item.desc)]);
                         // oneRow.table_row.cells.push([generateNotionRow(item.method)]);
+                        let type = (item.type) ? item.type.toLowerCase() : item.event[0].type.toLowerCase()
+                        let method = (type == "rest") ? ((item.method) ? item.method.toLowerCase() : item.event[0].method.toLowerCase()) : "-"
+                        method = (type == "datatable") ? "get" : method
+                        let uri = (type == "rest" || type == "datatable") ? ((item.uri) ? item.uri.toLowerCase() : item.event[0].uri.toLowerCase()) : "-"
                         let createSubPage = {
                             "parent": {
                                 "type": "database_id",
@@ -437,14 +511,16 @@ async function createNotionTable(apiSpecList, secret) {
                                         }
                                     ]
                                 },
-
-                                "Method": {
-
-                                    "select": {
-                                        "name": item.method.toLowerCase()
-                                    }
-
+                                "Type": {
+                                    "rich_text": [
+                                        {
+                                            "text": {
+                                                "content": `${(type == "rest" || type == "datatable") ? type.toUpperCase() + ":" + method.toUpperCase() : type.toUpperCase()}`
+                                            }
+                                        }
+                                    ]
                                 },
+
                                 "Description": {
                                     "rich_text": [
                                         {
@@ -453,16 +529,8 @@ async function createNotionTable(apiSpecList, secret) {
                                             }
                                         }
                                     ]
-                                },
-                                "Type": {
-                                    "rich_text": [
-                                        {
-                                            "text": {
-                                                "content": `${item.type}`
-                                            }
-                                        }
-                                    ]
-                                },
+                                }
+
                             },
                             "children": [
                                 {
@@ -477,98 +545,143 @@ async function createNotionTable(apiSpecList, secret) {
                                         ]
                                     }
                                 },
-                                {
-                                    "object": "block",
-                                    "paragraph": {
-                                        "rich_text": [
-                                            {
-                                                "text": {
-                                                    "content": `${item.desc}`,
-                                                }
-                                            }
-                                        ],
-                                        "color": "default"
-                                    }
-                                }
+
                             ],
                         }
-
-
-                        createSubPage.children.push(generateNotionBulletItem("URI", item.uri + "\n"));
-
-
-                        createSubPage.children.push(generateNotionBulletItem("Method", item.method + "\n"));
-
-                        let parmText = ""
-                        for (var property in item.parameters) {
-                            const obj = item.parameters[property];
-                            //minmax
-                            let minMax = "";
-                            if (obj.min != undefined && obj.max != undefined) {
-                                minMax = `(${obj.min}~${obj.max}${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
-                            }
-                            else if (obj.min != undefined) {
-                                minMax = `(${obj.min}~${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
-                            }
-                            else if (obj.max != undefined) {
-                                minMax = `(~${obj.max}${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
-                            }
-                            parmText += `${property}[${obj.type}]${!obj.req ? "(Optional)" : ""}:${obj.desc}${minMax == "" ? "" : minMax}`
-
-                            parmText += `\n`
-                            if (obj.sub) {
+                        // console.log(item.event[0]);
+                        // createSubPage.properties["Method"] = {
+                        //     "select": {
+                        //         "name": method
+                        //     }
+                        // }
+                        // createSubPage.properties["Type"] = {
+                        //     "rich_text": [
+                        //         {
+                        //             "text": {
+                        //                 "content": type
+                        //             }
+                        //         }
+                        //     ]
+                        // };
 
 
 
-                                for (var prop in obj.sub) {
-                                    const obj2 = obj.sub[prop];
-                                    parmText += `${prop}[${obj2.type}](${!obj2.req ? "Optional" : ""}):${obj2.desc}\n`
+                        createSubPage.children.push(generateSingleNotionBulletItem("Description:" + item.desc));
+                        createSubPage.children.push(generateEmptyItem())
+                        if (type == "sqs") {
+
+                            let bList = []
+                            item.event.forEach(element => {
+                                bList.push(generateSingleNotionBulletItem(element.sqsARN))
+                            });
+                            createSubPage.children.push(generateNotionBulletWithChilderenItem("SQS Arn", bList))
+                        }
+                        if (type == "s3") {
+
+
+                            // {
+                            //     "type": "s3",
+                            //     "existing": true,
+                            //     "bucket": `my-test-bucket`,
+                            //     "event": "s3:ObjectCreated:put"
+                            // },
+                            // {
+                            //     "type": "s3",
+                            //     "existing": false,
+                            //     "bucket": `\${ssm:/\${self:app}/\${opt:stage, "dev"}/filebucket}`,
+                            //     "event": "s3:ObjectCreated:post"
+                            // }
+
+                            let bList = []
+                            item.event.forEach(element => {
+                                let arrb = []
+                                arrb.push(generateSingleNotionBulletItem("existing: " + element.existing));
+                                arrb.push(generateSingleNotionBulletItem("bucket: " + element.bucket));
+                                bList.push(generateNotionBulletWithChilderenItem(element.event, arrb))
+
+                            });
+
+                            createSubPage.children.push(generateNotionBulletWithChilderenItem("S3 Event", bList))
+                            // console.log(JSON.stringify(createSubPage.children));
+                        }
+                        if (type == "rest" || type == "datatable") {
+                            createSubPage.children.push(generateSingleNotionBulletItem("URI: " + uri));
+                            createSubPage.children.push(generateEmptyItem())
+
+                            createSubPage.children.push(generateSingleNotionBulletItem("Method: " + ((type == "datatable") ? "get" : method)));
+
+                            let parmText = ""
+                            let bList = []
+                            for (var property in item.parameters) {
+                                const obj = item.parameters[property];
+                                //minmax
+                                let minMax = "";
+                                if (obj.min != undefined && obj.max != undefined) {
+                                    minMax = `(${obj.min}~${obj.max}${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
                                 }
-
-                            }
-                        }
-                        createSubPage.children.push(generateNotionBulletItem("parameter", parmText));
-
-
-
-
-                        //에러
-                        let errorText = ""
-
-                        if (item && item.errors) {
-                            for (var property in item.errors) {
-                                const obj = item.errors[property];
-
-                                // apiName.push(item.name)
-                                // errorTitles.push(property);
-                                // errorValues.push(obj.reason);
-
-                                errorText += `${property}(${obj.status_code}):${obj.reason}\n`
-
-                            }
-                            createSubPage.children.push(generateNotionBulletItem("error", errorText));
-                        }
-
-
-                        let responseText = ""
-                        for (var property in item.responses) {
-                            const obj = item.responses[property];
-                            responseText = `${property}[${obj.type}]:${obj.desc}`
-
-                            if (obj.sub) {
-
-                                for (var prop in obj.sub) {
-                                    const obj2 = obj.sub[prop];
-                                    responseText = `${prop}[${obj2.type}]${obj2.searchable ? "(Searchable)" : ""}:${obj2.desc}\n`
+                                else if (obj.min != undefined) {
+                                    minMax = `(${obj.min}~${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
                                 }
+                                else if (obj.max != undefined) {
+                                    minMax = `(~${obj.max}${obj.type.toLowerCase() == "string" ? "글자" : ""})`;
+                                }
+                                parmText = `${property}[${obj.type}]${!obj.req ? "(Optional)" : ""}:${obj.desc}${minMax == "" ? "" : minMax}`
 
+
+                                if (obj.sub) {
+
+
+                                    let arrb = []
+                                    for (var prop in obj.sub) {
+                                        const obj2 = obj.sub[prop];
+                                        arrb.push(generateSingleNotionBulletItem(`${prop}[${obj2.type}](${!obj2.req ? "Optional" : ""}):${obj2.desc}`));
+                                    }
+                                    bList.push(generateNotionBulletWithChilderenItem(parmText, arrb))
+                                }
+                                else {
+                                    bList.push(generateSingleNotionBulletItem(parmText))
+                                }
                             }
+                            createSubPage.children.push(generateEmptyItem())
+
+                            createSubPage.children.push(generateNotionBulletWithChilderenItem("Parameter", bList))
+                            //createSubPage.children.push(generateNotionBulletItem("parameter", parmText));
+                            createSubPage.children.push(generateEmptyItem())
+
+
+
+                            //에러
+
+
+                            if (item && item.errors) {
+                                let bList = []
+                                for (var property in item.errors) {
+                                    const obj = item.errors[property];
+                                    bList.push(generateSingleNotionBulletItem(`${property}(${obj.status_code}):${obj.reason}`))
+                                }
+                                createSubPage.children.push(generateNotionBulletWithChilderenItem("Error", bList));
+                                createSubPage.children.push(generateEmptyItem())
+                            }
+
+
+                            // let responseText = ""
+                            // for (var property in item.responses) {
+                            //     const obj = item.responses[property];
+                            //     responseText = `${property}[${obj.type}]:${obj.desc}`
+
+                            //     if (obj.sub) {
+
+                            //         for (var prop in obj.sub) {
+                            //             const obj2 = obj.sub[prop];
+                            //             responseText = `${prop}[${obj2.type}]${obj2.searchable ? "(Searchable)" : ""}:${obj2.desc}\n`
+                            //         }
+
+                            //     }
+                            // }
+                            // console.log(JSON.stringify(item.responses));
+                            createSubPage.children.push(generateNotionCodeBlock("Response", JSON.stringify(item.responses, null, 2)));
                         }
-                        // console.log(JSON.stringify(item.responses));
-                        createSubPage.children.push(generateNotionCodeBlock("Response", JSON.stringify(item.responses, null, 2)));
 
-
-                        console.log(createSubPage);
                         const response = await notion.pages.create(createSubPage)
 
                         resolve2("ok")
