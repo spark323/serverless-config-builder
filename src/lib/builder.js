@@ -865,8 +865,19 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                                 funcObject.events.push(
                                     {
                                         httpApi: {
-                                            path: `/${stage}/${element.uri}`,
+                                            path: `/${stage}/${item.uri}`,
                                             method: `${element.method.toLowerCase()}`,
+                                            authorizer: element.authorizer
+                                        }
+                                    }
+                                )
+                            }
+                            else if (element.type == "datatable") {
+                                funcObject.events.push(
+                                    {
+                                        httpApi: {
+                                            path: `/${stage}/${item.uri}`,
+                                            method: `get`,
                                             authorizer: element.authorizer
                                         }
                                     }
@@ -885,7 +896,6 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                             }
                             //sqs에 의해 트리거 되는 함수
                             else if (element.type == "sqs") {
-
                                 //sqs arn을 명시할 경우, 즉 이 serverless에서 SQS를 생성하는 것이 아닐 경우,
                                 if (element.sqsARN) {
                                     funcObject["events"].push({
@@ -929,7 +939,6 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                             else { }
                         });
                     }
-
                     //레이어가 존재한다면 레이어 추가
                     if (item.layer) {
                         funcObject["layers"] = [item.layer]
