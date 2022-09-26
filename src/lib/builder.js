@@ -766,88 +766,170 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
             apiSpec.forEach(async (obj) => {
                 const item = obj.item;
                 //item의 method가 존재하고  disabled가 아니라면, 
-                if (item && (item.method) && (!item.disabled)) {
+                if (item && (!item.disabled)) {
                     const nameArr = item.name.split("/");
                     let funcObject = {
                         name: item.functionName ? item.functionName : (`\${self:app}_${stage}_${version}_${nameArr.join("_")}`),
                         handler: `src/lambda/${item.name}.handler`,
                         events: [],
                     };
-                    //[todo1: 소스파일 경로 지정할 수 있도록 변경]
-                    //웹소켓 타입
-                    if (item.type == "websocket") {
-                        funcObject.events.push({
-                            websocket: {
-                                route: `${item.route}`,
-                            }
-                        })
-                    }
-                    //s3에 의해 트리거 되는 함수
-                    else if (item.type == "s3") {
-                        funcObject.events.push({
-                            s3: {
-                                bucket: `${item.event.bucket}`, event: item.event.event,
-                                existing: (item.event.existing) ? item.event.existing : false,
-                                rules: (item.event.rules) ? item.event.rules : undefined
-                            }
-                        })
-                    }
-                    //sqs에 의해 트리거 되는 함수
-                    else if (item.type == "sqs") {
+                    //event가 array가 아닐 때, 즉 옛날 버전
 
-                        //sqs arn을 명시할 경우, 즉 이 serverless에서 SQS를 생성하는 것이 아닐 경우,
-                        if (item.sqsARN) {
-                            funcObject["events"].push({
-                                sqs: { arn: item.sqsARN }
+                    if (!(Array.isArray(item.event))) {
+                        //웹소켓 타입
+                        if (item.type == "websocket") {
+                            funcObject.events.push({
+                                websocket: {
+                                    route: `${item.event.route}`,
+                                }
                             })
                         }
-                        //이 serverless에서 sqs를 생성하는 경우
-                        else {
-                            funcObject["events"].push({
-                                sqs: { arn: { "Fn::GetAtt": [item.sqs, "Arn"] } }
+                        else if (item.type == "REST") {
+                            funcObject.events.push(
+                                {
+                                    httpApi: {
+                                        path: `/${stage}/${item.uri}`,
+                                        method: `${(item.method) ? item.method.toLowerCase() : item.event.method.toLowerCase()}`,
+                                        authorizer: item.authorizer ? { name: item.authorizer } : undefined
+                                    }
+                                }
+                            )
+                        }
+                        //s3에 의해 트리거 되는 함수
+                        else if (item.type == "s3") {
+
+                            funcObject.events.push({
+                                s3: {
+                                    bucket: `${item.event.bucket}`, event: item.event.event,
+                                    existing: (item.event.existing) ? item.event.existing : false,
+                                    rules: (item.event.rules) ? item.event.rules : undefined
+                                }
                             })
                         }
-                    }
-                    //cognito user pool에 의해 트리거 되는 함수
-                    else if (item.type == "cognito") {
-                        funcObject["events"].push({
-                            cognitoUserPool: {
-                                pool: serverlessTemplet1.custom.apiSpec[item.poolNameRef],
-                                trigger: item.trigger,
-                                existing: true,
-                            }
-                        })
-                    }
-                    //step function에 의해 트리거 되는 함수
-                    else if (item.type == "sfn") {
-                        // serverless_template.yml에 정의된 step function에서 해당 state를 찾아서 functionName에 arn을 넣어준다
-                        serverlessTemplet1.resources.Resources[item.machineName].Properties.Definition.States[item.stateName].Parameters.FunctionName = funcObject.name;
-                    }
-                    //iot action에 의해 트리거 되는 함수
-                    else if (item.type == "iot") {
-                        funcObject["events"].push({
-                            iot: {
-                                sql: `select *, topic() as topic from "${item.topic}"`,
-                                enabled: true,
-                            }
-                        })
-                    }
-                    //어느 이벤트에도 트리거되지 않는 함수
-                    else if (item.type == "pure") {
+                        //sqs에 의해 트리거 되는 함수
+                        else if (item.type == "sqs") {
 
+                            //sqs arn을 명시할 경우, 즉 이 serverless에서 SQS를 생성하는 것이 아닐 경우,
+                            if (item.sqsARN) {
+                                funcObject["events"].push({
+                                    sqs: { arn: item.sqsARN }
+                                })
+                            }
+                            //이 serverless에서 sqs를 생성하는 경우
+                            else {
+                                funcObject["events"].push({
+                                    sqs: { arn: { "Fn::GetAtt": [item.sqs, "Arn"] } }
+                                })
+                            }
+                        }
+                        //cognito user pool에 의해 트리거 되는 함수
+                        else if (item.type == "cognito") {
+                            funcObject["events"].push({
+                                cognitoUserPool: {
+                                    pool: serverlessTemplet1.custom.apiSpec[item.poolNameRef],
+                                    trigger: item.trigger,
+                                    existing: true,
+                                }
+                            })
+                        }
+                        //step function에 의해 트리거 되는 함수
+                        else if (item.type == "sfn") {
+                            // serverless_template.yml에 정의된 step function에서 해당 state를 찾아서 functionName에 arn을 넣어준다
+                            serverlessTemplet1.resources.Resources[item.machineName].Properties.Definition.States[item.stateName].Parameters.FunctionName = funcObject.name;
+                        }
+                        //iot action에 의해 트리거 되는 함수
+                        else if (item.type == "iot") {
+                            funcObject["events"].push({
+                                iot: {
+                                    sql: `select *, topic() as topic from "${item.topic}"`,
+                                    enabled: true,
+                                }
+                            })
+                        }
+                        //어느 이벤트에도 트리거되지 않는 함수
+                        else if (item.type == "pure") { }
+                        //별도의 명시가 없다면 pure
+                        else { }
                     }
-                    //별도의 명시가 없다면 모두 HTTP
                     else {
-                        funcObject.events.push(
-                            {
-                                httpApi: {
-                                    path: `/${stage}/${item.uri}`,
-                                    method: `${item.method.toLowerCase()}`,
-                                    authorizer: item.authorizer ? { name: item.authorizer } : undefined
+                        item.event.forEach(element => {
+                            //웹소켓 타입
+                            if (element.type == "websocket") {
+                                funcObject.events.push({
+                                    websocket: {
+                                        route: `${element.route}`,
+                                    }
+                                })
+                            }
+                            else if (element.type == "REST") {
+                                funcObject.events.push(
+                                    {
+                                        httpApi: {
+                                            path: `/${stage}/${element.uri}`,
+                                            method: `${element.method.toLowerCase()}`,
+                                            authorizer: element.authorizer
+                                        }
+                                    }
+                                )
+                            }
+                            //s3에 의해 트리거 되는 함수
+                            else if (element.type == "s3") {
+
+                                funcObject.events.push({
+                                    s3: {
+                                        bucket: `${element.bucket}`, event: element.event,
+                                        existing: (element.existing) ? element.existing : false,
+                                        rules: (element.rules) ? element.rules : undefined
+                                    }
+                                })
+                            }
+                            //sqs에 의해 트리거 되는 함수
+                            else if (element.type == "sqs") {
+
+                                //sqs arn을 명시할 경우, 즉 이 serverless에서 SQS를 생성하는 것이 아닐 경우,
+                                if (element.sqsARN) {
+                                    funcObject["events"].push({
+                                        sqs: { arn: element.sqsARN }
+                                    })
+                                }
+                                //이 serverless에서 sqs를 생성하는 경우
+                                else {
+                                    funcObject["events"].push({
+                                        sqs: { arn: { "Fn::GetAtt": [element.sqs, "Arn"] } }
+                                    })
                                 }
                             }
-                        )
+                            //cognito user pool에 의해 트리거 되는 함수
+                            else if (element.type == "cognito") {
+                                funcObject["events"].push({
+                                    cognitoUserPool: {
+                                        pool: serverlessTemplet1.custom.apiSpec[element.poolNameRef],
+                                        trigger: element.trigger,
+                                        existing: true,
+                                    }
+                                })
+                            }
+                            //step function에 의해 트리거 되는 함수
+                            else if (element.type == "sfn") {
+                                // serverless_template.yml에 정의된 step function에서 해당 state를 찾아서 functionName에 arn을 넣어준다
+                                serverlessTemplet1.resources.Resources[element.machineName].Properties.Definition.States[element.stateName].Parameters.FunctionName = funcObject.name;
+                            }
+                            //iot action에 의해 트리거 되는 함수
+                            else if (item.type == "iot") {
+                                funcObject["events"].push({
+                                    iot: {
+                                        sql: `select *, topic() as topic from "${element.topic}"`,
+                                        enabled: true,
+                                    }
+                                })
+                            }
+                            //어느 이벤트에도 트리거되지 않는 함수
+                            else if (item.type == "pure") { }
+                            //별도의 명시가 없다면 pure
+                            else { }
+                        });
                     }
+
                     //레이어가 존재한다면 레이어 추가
                     if (item.layer) {
                         funcObject["layers"] = [item.layer]
