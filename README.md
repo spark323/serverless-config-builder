@@ -239,7 +239,7 @@ svlsbdr -n {notion_api_key}
 notion_api_key의 경우 [링크](https://developers.notion.com/) 를 참고해주세요. info.yml에 database_id가 정의되어 있어야 합니다. notion database_id의 경우 [Stack Overflow](https://stackoverflow.com/questions/67728038/where-to-find-database-id-for-my-database-in-notion) 를 참고해주세요.
 
 Notion 데이터베이스는 경우 Name Description Stage Version 컬럼이 있어야 합니다.
-![이미지](https://github.com/spark323/serverless-config-builder/doc/../../../../../doc/image/1.png)
+![이미지](https://github.com/spark323/serverless-config-builder/blob/master/doc/image/1.png)
 
 
 
