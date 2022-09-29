@@ -4,6 +4,17 @@ const fspr = require('fs').promises;
 var path = require('path')
 var moment = require('moment');
 
+// nested object에서 key 이름을 검색한다
+// https://stackoverflow.com/a/57683319/19565265
+function findAllByKey(obj, keyToFind) {
+    return Object.entries(obj)
+        .reduce((acc, [key, value]) => (key === keyToFind)
+            ? acc.concat(value)
+            : (typeof value === 'object' && value)
+            ? acc.concat(findAllByKey(value, keyToFind))
+            : acc
+        , [])
+}
 function replaceAll(str, find, replace) {
     return str.replace(new RegExp(find, 'g'), replace);
 }
@@ -946,9 +957,13 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                             })
                         }
                         //step function에 의해 트리거 되는 함수
-                        else if (item.type == "sfn") {
+                        else if (item.type == "sfn") { 
                             // serverless_template.yml에 정의된 step function에서 해당 state를 찾아서 functionName에 arn을 넣어준다
-                            serverlessTemplet1.resources.Resources[item.machineName].Properties.Definition.States[item.stateName].Parameters.FunctionName = funcObject.name;
+                            const foundObjects = findAllByKey(serverlessTemplet1.resources.Resources[item.machineName].Properties.Definition.States, item.stateName)
+                            if (foundObjects.length === 0 || foundObjects.length > 2) {
+                                throw new Error(`Cannot find state ${item.stateName}`);
+                            }
+                            foundObjects[0].Parameters.FunctionName = funcObject.name;
                         }
                         //iot action에 의해 트리거 되는 함수
                         else if (item.type == "iot") {
