@@ -78,7 +78,7 @@ exports.handler = async (event, context) => {
 
 ```
 ## category
-함수의 카테고리, 추후 문서화의 분류를 위해 사용합니다.
+함수의 카테고리입니다. 문서화 및  분류를 위해 사용합니다.
 
 ## desc
 함수의 설명입니다. 
