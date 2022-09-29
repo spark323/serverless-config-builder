@@ -83,6 +83,9 @@ exports.handler = async (event, context) => {
 ## desc
 함수의 설명입니다. 
 
+## disabled
+true로 설정할 경우 배포하지 않습니다.(serverless.yml에 포함되지 않습니다.)
+
 ## event 
 각 함수의 트리거 이벤트를 설정할 수 있습니다. 현재 사용 가능한 트리거는 다음과 같습니다.
 - REST : api gateway에서 http형식
