@@ -604,7 +604,7 @@ async function createNotionTable(apiSpecList, secret, stage, ver) {
 
                             let bList = []
                             item.event.forEach(element => {
-                                bList.push(generateSingleNotionBulletItem(element.sqsARN))
+                                bList.push(generateSingleNotionBulletItem(element.sqsARN || element.sqs))
                             });
                             createSubPage.children.push(generateNotionBulletWithChilderenItem("SQS Arn", bList))
                         }
