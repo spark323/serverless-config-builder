@@ -11,9 +11,9 @@ function findAllByKey(obj, keyToFind) {
         .reduce((acc, [key, value]) => (key === keyToFind)
             ? acc.concat(value)
             : (typeof value === 'object' && value)
-            ? acc.concat(findAllByKey(value, keyToFind))
-            : acc
-        , [])
+                ? acc.concat(findAllByKey(value, keyToFind))
+                : acc
+            , [])
 }
 function replaceAll(str, find, replace) {
     return str.replace(new RegExp(find, 'g'), replace);
@@ -582,9 +582,7 @@ async function createNotionTable(apiSpecList, secret, stage, ver) {
                         if (type == "sqs") {
 
                             let bList = []
-                            item.event.forEach(element => {
-                                bList.push(generateSingleNotionBulletItem(element.sqsARN))
-                            });
+                            item.event.forEach(element => { bList.push(generateSingleNotionBulletItem(element.sqsARN || element.sqs)) });
                             createSubPage.children.push(generateNotionBulletWithChilderenItem("SQS Arn", bList))
                         }
                         if (type == "s3") {
@@ -957,7 +955,7 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                             })
                         }
                         //step function에 의해 트리거 되는 함수
-                        else if (item.type == "sfn") { 
+                        else if (item.type == "sfn") {
                             // serverless_template.yml에 정의된 step function에서 해당 state를 찾아서 functionName에 arn을 넣어준다
                             const foundObjects = findAllByKey(serverlessTemplet1.resources.Resources[item.machineName].Properties.Definition.States, item.stateName)
                             if (foundObjects.length === 0 || foundObjects.length > 2) {
