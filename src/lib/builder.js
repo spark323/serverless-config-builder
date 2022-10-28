@@ -1090,7 +1090,8 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                     }
                     //레이어가 존재한다면 레이어 추가
                     if (item.layer) {
-                        funcObject["layers"] = [item.layer]
+                        // 하위호환을 위해 배열로 들어오지 않은 경우 배열로 변환
+                        funcObject["layers"] = Array.isArray(item.layer) ? item.layer : [item.layer];
                     }
                     //타임아웃이 존재한다면, 타임아웃 추가
                     if (item.timeout) {
