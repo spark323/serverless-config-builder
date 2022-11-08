@@ -957,13 +957,13 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                             //sqs arn을 명시할 경우, 즉 이 serverless에서 SQS를 생성하는 것이 아닐 경우,
                             if (item.sqsARN) {
                                 funcObject["events"].push({
-                                    sqs: { arn: item.sqsARN }
+                                    sqs: { arn: item.sqsARN, batchSize: item.batchSize }
                                 })
                             }
                             //이 serverless에서 sqs를 생성하는 경우
                             else {
                                 funcObject["events"].push({
-                                    sqs: { arn: { "Fn::GetAtt": [item.sqs, "Arn"] } }
+                                    sqs: { arn: { "Fn::GetAtt": [item.sqs, "Arn"] }, batchSize: item.batchSize }
                                 })
                             }
                         }
@@ -1048,13 +1048,13 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                                 //sqs arn을 명시할 경우, 즉 이 serverless에서 SQS를 생성하는 것이 아닐 경우,
                                 if (element.sqsARN) {
                                     funcObject["events"].push({
-                                        sqs: { arn: element.sqsARN }
+                                        sqs: { arn: element.sqsARN, batchSize: element.batchSize }
                                     })
                                 }
                                 //이 serverless에서 sqs를 생성하는 경우
                                 else {
                                     funcObject["events"].push({
-                                        sqs: { arn: { "Fn::GetAtt": [element.sqs, "Arn"] } }
+                                        sqs: { arn: { "Fn::GetAtt": [element.sqs, "Arn"] }, batchSize: element.batchSize }
                                     })
                                 }
                             }
