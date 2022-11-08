@@ -711,11 +711,35 @@ async function createNotionTable(apiSpecList, secret, stage, ver) {
                             //     }
                             // }
                             // console.log(JSON.stringify(item.responses));
-                            createSubPage.children.push(generateNotionCodeBlock("Response", JSON.stringify(item.responses, null, 2)));
+                            let responseString=JSON.stringify(item.responses, null, 2);
+                            if(responseString.length>1990)
+                            { 
+                                let bList = []
+                                for (var property in item.responses.schema.properties) {
+                                    const obj = item.responses.schema.properties[property];
+                                    if(!Array.isArray(obj))
+                                    {
+                                        bList.push(generateSingleNotionBulletItem(`${property}[${obj.type}]:${obj.desc}`))
+                                    }
+                                    else
+                                    {
+                                        let modelObject=obj[0];
+                                        let arrb = []
+                                        for (var prop in modelObject) {
+                                            const obj2 = modelObject[prop];
+                                            arrb.push(generateSingleNotionBulletItem(`${prop}[${obj2.type}]${!obj2.searchable ? "(Searhable)" : ""}:${obj2.desc}`));
+                                        }
+                                        bList.push(generateNotionBulletWithChilderenItem(property, arrb))                                      
+                                    }
+                                }
+                                createSubPage.children.push(generateNotionBulletWithChilderenItem("Response", bList));
+                                createSubPage.children.push(generateEmptyItem())
+                            }
+                            else{
+                                createSubPage.children.push(generateNotionCodeBlock("Response", JSON.stringify(item.responses, null, 2)));
+                            }
                         }
-
                         const response = await notion.pages.create(createSubPage)
-
                         resolve2("ok")
                     } catch (e) {
                         console.log(e);
@@ -725,9 +749,6 @@ async function createNotionTable(apiSpecList, secret, stage, ver) {
             }, Promise.resolve());
         }
     }
-
-
-
 }
 //[todo4: 포스트맨에 Export 기능 추가하기]
 function createPostmanImport(apiSpecList) {
