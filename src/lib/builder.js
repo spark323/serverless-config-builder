@@ -1082,6 +1082,12 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                                     }
                                 })
                             }
+                            //dynamo db에 의해 트리거 되는 함수
+                            else if (element.type == "ddb") {
+                                funcObject["events"].push({
+                                    stream: { type: "dynamodb", arn: { "Fn::GetAtt": [element.table, "StreamArn"] }, filterPatterns: element.filterPatterns }
+                                })
+                            }
                             //어느 이벤트에도 트리거되지 않는 함수
                             else if (item.type == "pure") { }
                             //별도의 명시가 없다면 pure
