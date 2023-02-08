@@ -935,7 +935,7 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                 if (item && (item.disabled !== true) && (!(item.disabled_stages && item.disabled_stages.includes(stage)))) {
                     const nameArr = item.name.split("/");
                     let funcObject = {
-                        name: item.functionName ? item.functionName : (`\${self:app}_${stage}_${version}_${nameArr.join("_")}`),
+                        name: item.functionName ? item.functionName : (`\${self:service}_${stage}_${version}_${nameArr.join("_")}`),
                         handler: `src/lambda/${item.name}.handler`,
                         events: [],
                     };
