@@ -1165,7 +1165,7 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
             Export: {
                 Name: "${self:provider.stackName}-HttpApiUrl"
             }
-        }
+        }, ...serverlessTemplet1.Outputs
     }
     //serverless.yml파일을 쓴다.
     let yamlStr = yaml.dump(serverlessTemplet1, { lineWidth: 140 });
