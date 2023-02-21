@@ -1147,10 +1147,13 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
     //     HttpApiUrl:
     //       Export:
     //         Name: ${self:provider.stackName}-HttpApiUrl
-    if (!serverlessTemplet1.Outputs) {
-        serverlessTemplet1.Outputs = {}
+    if (!serverlessTemplet1.resources) {
+        serverlessTemplet1.resources = {
+            Outputs: {}
+        };
     }
-    serverlessTemplet1.Outputs = {
+
+    serverlessTemplet1.resources.Outputs = {
         ServerlessDeploymentBucketName: {
             Export: {
                 Name: "${self:provider.stackName}-ServiceEndpoint"
@@ -1165,7 +1168,7 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
             Export: {
                 Name: "${self:provider.stackName}-HttpApiUrl"
             }
-        }, ...serverlessTemplet1.Outputs
+        }, ...serverlessTemplet1.resources.Outputs
     }
     //serverless.yml파일을 쓴다.
     let yamlStr = yaml.dump(serverlessTemplet1, { lineWidth: 140 });
