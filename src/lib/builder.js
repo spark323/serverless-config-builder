@@ -1136,6 +1136,37 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
     }
     serverlessTemplet1.functions = functions;
     serverlessTemplet1.provider.stage = `${stage}-${version}`;
+    // resources: # CloudFormation template syntax
+    //   Outputs:
+    //     ServerlessDeploymentBucketName:
+    //       Export:
+    //         Name: ${self:provider.stackName}-ServiceEndpoint
+    //     HttpApiId:
+    //       Export:
+    //         Name: ${self:provider.stackName}-HttpApiId
+    //     HttpApiUrl:
+    //       Export:
+    //         Name: ${self:provider.stackName}-HttpApiUrl
+    if (!serverlessTemplet1.Outputs) {
+        serverlessTemplet1.Outputs = {}
+    }
+    serverlessTemplet1.Outputs = {
+        ServerlessDeploymentBucketName: {
+            Export: {
+                Name: "${self:provider.stackName}-ServiceEndpoint"
+            }
+        },
+        HttpApiId: {
+            Export: {
+                Name: "${self:provider.stackName}-HttpApiId"
+            }
+        },
+        HttpApiUrl: {
+            Export: {
+                Name: "${self:provider.stackName}-HttpApiUrl"
+            }
+        }
+    }
     //serverless.yml파일을 쓴다.
     let yamlStr = yaml.dump(serverlessTemplet1, { lineWidth: 140 });
     fs.writeFileSync(`serverless.yml`, yamlStr, 'utf8');
