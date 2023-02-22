@@ -713,9 +713,18 @@ async function createNotionTable(apiSpecList, secret, stage, ver) {
                             // console.log(JSON.stringify(item.responses));
                             let responseString = JSON.stringify(item.responses, null, 2);
                             if (responseString.length > 1990) {
+
+
+                                let iterateList = undefined;
+                                if (type == "datatable") {
+                                    iterateList = item.responses.Columns.sub
+                                }
+                                else {
+                                    iterateList = item.responses.schema.properties;
+                                }
                                 let bList = []
-                                for (var property in item.responses.schema.properties) {
-                                    const obj = item.responses.schema.properties[property];
+                                for (var property in iterateList) {
+                                    const obj = iterateList[property];
                                     if (!Array.isArray(obj)) {
                                         bList.push(generateSingleNotionBulletItem(`${property}[${obj.type}]:${obj.desc}`))
                                     }
@@ -1136,40 +1145,6 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
     }
     serverlessTemplet1.functions = functions;
     serverlessTemplet1.provider.stage = `${stage}-${version}`;
-    // resources: # CloudFormation template syntax
-    //   Outputs:
-    //     ServerlessDeploymentBucketName:
-    //       Export:
-    //         Name: ${self:provider.stackName}-ServiceEndpoint
-    //     HttpApiId:
-    //       Export:
-    //         Name: ${self:provider.stackName}-HttpApiId
-    //     HttpApiUrl:
-    //       Export:
-    //         Name: ${self:provider.stackName}-HttpApiUrl
-    if (!serverlessTemplet1.resources) {
-        serverlessTemplet1.resources = {
-            Outputs: {}
-        };
-    }
-
-    serverlessTemplet1.resources.Outputs = {
-        ServerlessDeploymentBucketName: {
-            Export: {
-                Name: "${self:provider.stackName}-ServiceEndpoint"
-            }
-        },
-        HttpApiId: {
-            Export: {
-                Name: "${self:provider.stackName}-HttpApiId"
-            }
-        },
-        HttpApiUrl: {
-            Export: {
-                Name: "${self:provider.stackName}-HttpApiUrl"
-            }
-        }, ...serverlessTemplet1.resources.Outputs
-    }
     //serverless.yml파일을 쓴다.
     let yamlStr = yaml.dump(serverlessTemplet1, { lineWidth: 140 });
     fs.writeFileSync(`serverless.yml`, yamlStr, 'utf8');
