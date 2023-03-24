@@ -1154,17 +1154,20 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
     serverlessTemplet1.resources.Outputs = {
         ServerlessDeploymentBucketName: {
             Export: {
-                Name: "${self:provider.stackName}-ServiceEndpoint"
+                Name: "${self:provider.stackName}-ServiceEndpoint",
+                Value: "${self:provider.stackName}-ServiceEndpoint"
             }
         },
         HttpApiId: {
             Export: {
-                Name: "${self:provider.stackName}-HttpApiId"
+                Name: "${self:provider.stackName}-HttpApiId",
+                Value: "${self:provider.stackName}-HttpApiId",
             }
         },
         HttpApiUrl: {
             Export: {
-                Name: "${self:provider.stackName}-HttpApiUrl"
+                Name: "${self:provider.stackName}-HttpApiUrl",
+                Value: "${self:provider.stackName}-HttpApiUrl",
             }
         }, ...serverlessTemplet1.resources.Outputs
     }
