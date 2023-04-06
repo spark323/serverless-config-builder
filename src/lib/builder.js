@@ -1052,7 +1052,7 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                             else if (element.type == "cloudFront") {
                                 funcObject.events.push(
                                     {
-                                        httpApi: {
+                                        cloudFront: {
                                             eventType: element.eventType,
                                             origin: element.origin,
                                         }
