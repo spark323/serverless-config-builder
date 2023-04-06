@@ -967,6 +967,7 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                                 }
                             )
                         }
+
                         //s3에 의해 트리거 되는 함수
                         else if (item.type == "s3") {
 
@@ -1044,6 +1045,16 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                                             path: `/${stage}/${item.uri}`,
                                             method: `${element.method.toLowerCase()}`,
                                             authorizer: element.authorizer
+                                        }
+                                    }
+                                )
+                            }
+                            else if (element.type == "cloudFront") {
+                                funcObject.events.push(
+                                    {
+                                        httpApi: {
+                                            eventType: element.eventType,
+                                            origin: element.origin,
                                         }
                                     }
                                 )
