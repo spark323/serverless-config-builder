@@ -985,7 +985,11 @@ async function printServerlessFunction(templateFile, apiSpecList, stage, version
                             //sqs arn을 명시할 경우, 즉 이 serverless에서 SQS를 생성하는 것이 아닐 경우,
                             if (item.sqsARN) {
                                 funcObject["events"].push({
-                                    sqs: { arn: item.sqsARN, batchSize: item.batchSize }
+                                    sqs: {
+                                        arn: item.sqsARN,
+                                        batchSize: item.batchSize,
+                                        maximumBatchingWindow: item.maximumBatchingWindow
+                                    }
                                 })
                             }
                             //이 serverless에서 sqs를 생성하는 경우
